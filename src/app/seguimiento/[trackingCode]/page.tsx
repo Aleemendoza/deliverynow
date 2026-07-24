@@ -1,0 +1,3 @@
+import { SiteHeader } from "@/components/site-header";
+import { TrackingLookup } from "@/components/tracking/tracking-lookup";
+export default async function TrackingDetail({params}:{params:Promise<{trackingCode:string}>}){const {trackingCode}=await params;return <><SiteHeader/><main className="mx-auto max-w-2xl px-4 py-14"><p className="font-bold text-yellow-400">PEDIDO {trackingCode.toUpperCase()}</p><h1 className="mt-2 text-3xl font-bold">Seguimiento protegido</h1><p className="mt-3 text-zinc-400">Confirmá el correo asociado para ver la línea de tiempo.</p><TrackingLookup initialCode={trackingCode}/></main></>}

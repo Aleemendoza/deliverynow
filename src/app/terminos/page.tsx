@@ -1,0 +1,1 @@
+export default function Terms(){return <main className="mx-auto max-w-2xl px-4 py-14"><h1 className="text-3xl font-bold">Términos del servicio</h1><p className="mt-5 leading-7 text-zinc-400">El precio, disponibilidad y alcance del envío se confirman antes de crear el pedido. Los objetos deben ser compatibles con el medio de transporte y estar correctamente declarados.</p></main>}

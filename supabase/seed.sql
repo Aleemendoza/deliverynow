@@ -1,0 +1,3 @@
+insert into public.service_types(code,name) values ('document','Documento'),('package','Paquete'),('purchase','Compra'),('store_pickup','Retiro en comercio'),('errand','Trámite'),('other','Otro') on conflict(code) do nothing;
+insert into public.pricing_rules(base_price,included_km,price_per_extra_km,minimum_price,configuration) values(3500,3,450,3500,'{"currency":"ARS","version":1}') on conflict do nothing;
+insert into public.service_zones(name,city,province,polygon_geojson) values('Villa Constitución','Villa Constitución','Santa Fe','{"type":"Polygon","coordinates":[]}') on conflict do nothing;

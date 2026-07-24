@@ -1,0 +1,2 @@
+import { SiteHeader } from "@/components/site-header";
+export default function Contact(){return <><SiteHeader/><main className="mx-auto max-w-xl px-4 py-14"><p className="font-bold text-yellow-400">CONTACTO</p><h1 className="mt-2 text-4xl font-black">Estamos para ayudarte.</h1><p className="mt-5 text-zinc-400">Para consultas sobre un pedido, tené a mano tu código de seguimiento.</p><a href="mailto:soporte@deliverynow.com.ar" className="mt-7 inline-block rounded-lg border border-white/20 px-5 py-3">soporte@deliverynow.com.ar</a></main></>}
