@@ -1,13 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #111315;
-  --foreground: #f8fafc;
+  --background: #0b1120;
+  --foreground: #f1f5f9;
+  --surface: #131c31;
+  --surface-raised: #1b2944;
+  --accent: #38bdf8;
+  --accent-strong: #0ea5e9;
+  --accent-soft: #e0f2fe;
+  --accent-foreground: #06233a;
+  --info: #7dd3fc;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-brand: var(--accent);
+  --color-brand-strong: var(--accent-strong);
+  --color-brand-soft: var(--accent-soft);
+  --color-brand-foreground: var(--accent-foreground);
+  --color-info: var(--info);
+  /* Compatibility aliases keep legacy utility classes on the new brand palette. */
+  --color-yellow-400: var(--accent);
+  --color-yellow-100: var(--accent-soft);
+  --color-amber-300: var(--info);
   --font-sans: var(--font-geist-sans);
 }
 

@@ -4,7 +4,7 @@ import { createSupabaseServerClient, getSupabaseServerClient } from "@/lib/supab
 import { apiError } from "@/lib/http";
 import { sendOrderStatusEmail } from "@/lib/notifications/email";
 
-const schema = z.object({ status: z.enum(["confirmed", "assigned", "heading_to_pickup", "at_pickup", "picked_up", "heading_to_delivery", "at_delivery", "delivered", "cancelled", "rejected", "incident"]), reason: z.string().trim().max(500).optional(), deliveryPin: z.string().regex(/^\d{6}$/).optional() });
+const schema = z.object({ status: z.enum(["confirmed", "assigned", "heading_to_pickup", "at_pickup", "picked_up", "heading_to_delivery", "at_delivery", "delivered", "cancelled", "rejected", "incident"]), reason: z.string().trim().max(500).optional(), deliveryPin: z.string().regex(/^\d{6}$/).optional(), pickupConfirmed: z.boolean().optional() }).superRefine((value, context) => { if (value.status === "picked_up" && !value.pickupConfirmed) context.addIssue({ code: "custom", path: ["pickupConfirmed"], message: "Confirmá que retiraste el pedido antes de continuar." }); });
 
 export async function POST(request: NextRequest, context: RouteContext<"/api/orders/[id]/status">) {
   const { id } = await context.params;
