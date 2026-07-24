@@ -24,8 +24,16 @@ type PlaceAutocompleteElement = HTMLElement & {
   locationRestriction: { north: number; south: number; east: number; west: number };
 };
 type PlaceSelectionEvent = Event & { placePrediction: { toPlace: () => SelectedPlace } };
-type MapInstance = { setCenter: (position: Coordinates) => void; setZoom: (zoom: number) => void };
-type MarkerInstance = { setPosition: (position: Coordinates) => void };
+type LatLng = { lat: () => number; lng: () => number };
+type MapInstance = {
+  setCenter: (position: Coordinates) => void;
+  setZoom: (zoom: number) => void;
+  addListener: (eventName: "click", callback: (event: { latLng?: LatLng }) => void) => void;
+};
+type MarkerInstance = {
+  setPosition: (position: Coordinates) => void;
+  addListener: (eventName: "dragend", callback: (event: { latLng?: LatLng }) => void) => void;
+};
 type Props = {
   name: AddressKey;
   label: string;
@@ -58,7 +66,7 @@ export function AddressPicker({ name, label, setValue, value, error }: Props) {
         const google = await loadGoogleMaps(apiKey);
         const mapsLibrary = await google.maps.importLibrary("maps") as {
           Map: new (element: HTMLDivElement, options: object) => MapInstance;
-          Marker: new (options: { position: Coordinates; map: MapInstance }) => MarkerInstance;
+          Marker: new (options: { draggable: boolean; position: Coordinates; map: MapInstance }) => MarkerInstance;
         };
         const placesLibrary = await google.maps.importLibrary("places") as {
           PlaceAutocompleteElement: new () => PlaceAutocompleteElement;
@@ -84,6 +92,51 @@ export function AddressPicker({ name, label, setValue, value, error }: Props) {
         autocompleteHost.current.replaceChildren(autocompleteElement);
 
         let marker: MarkerInstance | undefined;
+        let selectedAddress = false;
+        let lastValidPosition: Coordinates | undefined;
+
+        const coordinatesFromLatLng = (location?: LatLng): Coordinates | undefined => {
+          const lat = location?.lat();
+          const lng = location?.lng();
+          if (typeof lat !== "number" || !Number.isFinite(lat) || typeof lng !== "number" || !Number.isFinite(lng)) return undefined;
+          return { lat, lng };
+        };
+
+        const updateMarkerPosition = (position: Coordinates) => {
+          const coordinates = { latitude: position.lat, longitude: position.lng };
+          if (!isWithinServiceArea(coordinates)) {
+            setAreaError(`Este punto está a ${distanceInKm(VILLA_CONSTITUCION_CENTER, coordinates).toFixed(1)} km. Por ahora Delivery Now cubre hasta ${SERVICE_RADIUS_KM} km desde Villa Constitución.`);
+            setValue(`${name}.mapConfirmed`, false, { shouldValidate: true });
+            if (marker && lastValidPosition) marker.setPosition(lastValidPosition);
+            return;
+          }
+
+          if (marker) marker.setPosition(position);
+          else if (map) {
+            marker = new mapsLibrary.Marker({ draggable: true, position, map });
+            marker.addListener("dragend", (event) => {
+              const draggedPosition = coordinatesFromLatLng(event.latLng);
+              if (draggedPosition) updateMarkerPosition(draggedPosition);
+            });
+          }
+
+          lastValidPosition = position;
+          setAreaError("");
+          setValue(`${name}.latitude`, position.lat, { shouldValidate: true });
+          setValue(`${name}.longitude`, position.lng, { shouldValidate: true });
+          setValue(`${name}.mapConfirmed`, true, { shouldValidate: true });
+        };
+
+        map?.addListener("click", (event) => {
+          if (!selectedAddress) {
+            setAreaError("Primero elegí una dirección sugerida; después podés ajustar el marcador en el mapa.");
+            return;
+          }
+
+          const position = coordinatesFromLatLng(event.latLng);
+          if (position) updateMarkerPosition(position);
+        });
+
         autocompleteElement.addEventListener("gmp-select", async (event) => {
           try {
             const place = (event as PlaceSelectionEvent).placePrediction?.toPlace();
@@ -108,20 +161,16 @@ export function AddressPicker({ name, label, setValue, value, error }: Props) {
             const mapCoordinates = { lat: latitude, lng: longitude };
             map?.setCenter(mapCoordinates);
             map?.setZoom(16);
-            if (marker) marker.setPosition(mapCoordinates);
-            else if (map) marker = new mapsLibrary.Marker({ position: mapCoordinates, map });
 
             const part = (type: string) => place.addressComponents?.find((component) => component.types?.includes(type))?.longText ?? "";
-            setAreaError("");
             setValue(`${name}.formattedAddress`, place.formattedAddress ?? "", { shouldValidate: true });
             setValue(`${name}.placeId`, place.id ?? "", { shouldValidate: true });
-            setValue(`${name}.latitude`, latitude, { shouldValidate: true });
-            setValue(`${name}.longitude`, longitude, { shouldValidate: true });
             setValue(`${name}.city`, part("locality") || part("administrative_area_level_2"), { shouldValidate: true });
             setValue(`${name}.province`, part("administrative_area_level_1"), { shouldValidate: true });
             setValue(`${name}.postalCode`, part("postal_code"));
             setValue(`${name}.streetNumber`, part("street_number"));
-            setValue(`${name}.mapConfirmed`, Boolean(place.id), { shouldValidate: true });
+            selectedAddress = Boolean(place.id);
+            updateMarkerPosition(mapCoordinates);
           } catch {
             setAreaError("No pudimos confirmar esa dirección. Intentá seleccionar otra sugerencia.");
             setValue(`${name}.mapConfirmed`, false, { shouldValidate: true });
@@ -152,7 +201,7 @@ export function AddressPicker({ name, label, setValue, value, error }: Props) {
       </label>
       {apiKey ? <>
         <div ref={mapElement} className="h-48 overflow-hidden rounded-xl border border-white/10 bg-zinc-900" aria-label="Mapa para confirmar la dirección" />
-        <p className="text-xs text-zinc-400">{ready ? `Seleccioná una sugerencia y verificá el marcador. Cobertura: hasta ${SERVICE_RADIUS_KM} km desde Villa Constitución.` : "Cargando buscador de direcciones…"}</p>
+        <p className="text-xs text-zinc-400">{ready ? `Seleccioná una sugerencia y ajustá el marcador con un clic o arrastrándolo. Cobertura: hasta ${SERVICE_RADIUS_KM} km desde Villa Constitución.` : "Cargando buscador de direcciones…"}</p>
       </> : <p className="text-xs text-amber-300">El buscador de direcciones se habilita al configurar Google Places.</p>}
       {(loadError || areaError || error) && <p role="alert" className="text-xs text-red-400">{loadError || areaError || error}</p>}
     </div>
