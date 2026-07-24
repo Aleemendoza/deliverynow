@@ -1,23 +1,160 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
-import type { UseFormSetValue } from "react-hook-form";
 import { MapPin } from "lucide-react";
+import type { UseFormSetValue } from "react-hook-form";
 import type { OrderDraft } from "@/features/orders/schema";
+import { loadGoogleMaps } from "@/lib/google/maps-loader";
 import { distanceInKm, isWithinServiceArea, SERVICE_RADIUS_KM, VILLA_CONSTITUCION_CENTER } from "@/lib/service-area";
 
 type AddressKey = "pickup" | "delivery";
-type Props = { name: AddressKey; label: string; setValue: UseFormSetValue<OrderDraft>; value?: string; error?: string };
-export function AddressPicker({ name, label, setValue, value, error }: Props) {
-  const input = useRef<HTMLInputElement>(null); const mapElement = useRef<HTMLDivElement>(null); const [ready, setReady] = useState(false); const [areaError, setAreaError] = useState(""); const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  useEffect(() => {
-    if (!key || !input.current) return;
-    const setup = () => { const latitudeDelta = SERVICE_RADIUS_KM / 111; const longitudeDelta = SERVICE_RADIUS_KM / (111 * Math.cos(VILLA_CONSTITUCION_CENTER.latitude * Math.PI / 180)); const map = mapElement.current ? new window.google!.maps.Map(mapElement.current, { center: VILLA_CONSTITUCION_CENTER, zoom: 12, disableDefaultUI: true, zoomControl: true }) : undefined; let marker: GoogleMarker | undefined; const autocomplete = new window.google!.maps.places.Autocomplete(input.current!, { componentRestrictions: { country: "ar" }, bounds: { north: VILLA_CONSTITUCION_CENTER.latitude + latitudeDelta, south: VILLA_CONSTITUCION_CENTER.latitude - latitudeDelta, east: VILLA_CONSTITUCION_CENTER.longitude + longitudeDelta, west: VILLA_CONSTITUCION_CENTER.longitude - longitudeDelta }, strictBounds: true, fields: ["formatted_address", "place_id", "geometry", "address_components"] }); autocomplete.addListener("place_changed", () => { const place = autocomplete.getPlace(); const location = place.geometry?.location; if (!place.place_id || !location) return; const coordinates = { latitude: location.lat(), longitude: location.lng() }; if (!isWithinServiceArea(coordinates)) { setAreaError(`Esta dirección está a ${distanceInKm(VILLA_CONSTITUCION_CENTER, coordinates).toFixed(1)} km. Por ahora Delivery Now cubre hasta ${SERVICE_RADIUS_KM} km desde Villa Constitución.`); setValue(`${name}.mapConfirmed`, false, { shouldValidate: true }); return; } map?.setCenter(coordinates); map?.setZoom(16); if (marker) marker.setPosition(coordinates); else if (map) marker = new window.google!.maps.Marker({ position: coordinates, map }); setAreaError(""); const part = (type: string) => place.address_components?.find((item) => item.types.includes(type))?.long_name ?? ""; setValue(`${name}.formattedAddress`, place.formatted_address ?? "", { shouldValidate: true }); setValue(`${name}.placeId`, place.place_id, { shouldValidate: true }); setValue(`${name}.latitude`, coordinates.latitude, { shouldValidate: true }); setValue(`${name}.longitude`, coordinates.longitude, { shouldValidate: true }); setValue(`${name}.city`, part("locality") || part("administrative_area_level_2"), { shouldValidate: true }); setValue(`${name}.province`, part("administrative_area_level_1"), { shouldValidate: true }); setValue(`${name}.postalCode`, part("postal_code")); setValue(`${name}.streetNumber`, part("street_number")); setValue(`${name}.mapConfirmed`, true, { shouldValidate: true }); }); setReady(true); };
-    if (window.google?.maps?.places) { setup(); return; } const script = document.createElement("script"); script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`; script.async = true; script.onload = setup; document.head.appendChild(script); return () => script.remove();
-  }, [key, name, setValue]);
-  return <div className="grid gap-2"><label className="grid gap-1 text-sm font-medium">{label}<div className="relative"><MapPin className="pointer-events-none absolute left-3 top-3.5 size-4 text-yellow-400"/><input ref={input} defaultValue={value} onChange={()=>{setAreaError("");setValue(`${name}.mapConfirmed`,false,{shouldValidate:false});setValue(`${name}.placeId`,"",{shouldValidate:false})}} placeholder="Buscá calle y altura" className="w-full rounded-lg bg-zinc-900 py-3 pl-9 pr-4 outline-none ring-yellow-400 focus:ring-2"/></div></label>{key ? <><div ref={mapElement} className="h-48 overflow-hidden rounded-xl border border-white/10 bg-zinc-900" aria-label="Mapa para confirmar la dirección"/><p className="text-xs text-zinc-400">{ready ? `Seleccioná una sugerencia y verificá el marcador. Cobertura: hasta ${SERVICE_RADIUS_KM} km desde Villa Constitución.` : "Cargando buscador de direcciones…"}</p></> : <p className="text-xs text-amber-300">El buscador de direcciones se habilita al configurar Google Places.</p>}{(areaError||error)&&<p role="alert" className="text-xs text-red-400">{areaError||error}</p>}</div>;
-}
+type Coordinates = { lat: number; lng: number };
+type AddressComponent = { longText?: string; types?: string[] };
+type SelectedPlace = {
+  id?: string;
+  formattedAddress?: string;
+  location?: { lat: () => number; lng: () => number };
+  addressComponents?: AddressComponent[];
+  fetchFields: (options: { fields: string[] }) => Promise<void>;
+};
+type PlaceAutocompleteElement = HTMLElement & {
+  value?: string;
+  placeholder: string;
+  includedRegionCodes: string[];
+  locationRestriction: { north: number; south: number; east: number; west: number };
+};
+type PlaceSelectionEvent = Event & { placePrediction: { toPlace: () => SelectedPlace } };
+type MapInstance = { setCenter: (position: Coordinates) => void; setZoom: (zoom: number) => void };
+type MarkerInstance = { setPosition: (position: Coordinates) => void };
+type Props = {
+  name: AddressKey;
+  label: string;
+  setValue: UseFormSetValue<OrderDraft>;
+  value?: string;
+  error?: string;
+};
 
-declare global { interface Window { google?: GoogleMaps } }
-type GoogleMarker = { setPosition(position: { latitude: number; longitude: number }): void };
-type GoogleMaps = { maps: { Map: new (element: HTMLDivElement, options: unknown) => { setCenter(position: { latitude: number; longitude: number }): void; setZoom(zoom: number): void }; Marker: new (options: { position: { latitude: number; longitude: number }; map: unknown }) => GoogleMarker; places: { Autocomplete: new (input: HTMLInputElement, options: unknown) => { addListener(event: string, callback: () => void): void; getPlace(): GooglePlace } } } };
-type GooglePlace = { formatted_address?: string; place_id?: string; geometry?: { location?: { lat(): number; lng(): number } }; address_components?: Array<{ long_name: string; types: string[] }> };
+const mapCenter: Coordinates = {
+  lat: VILLA_CONSTITUCION_CENTER.latitude,
+  lng: VILLA_CONSTITUCION_CENTER.longitude,
+};
+
+export function AddressPicker({ name, label, setValue, value, error }: Props) {
+  const autocompleteHost = useRef<HTMLDivElement>(null);
+  const mapElement = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [areaError, setAreaError] = useState("");
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  useEffect(() => {
+    if (!apiKey || !autocompleteHost.current) return;
+
+    let cancelled = false;
+    let autocompleteElement: PlaceAutocompleteElement | undefined;
+
+    const initialize = async () => {
+      try {
+        const google = await loadGoogleMaps(apiKey);
+        const mapsLibrary = await google.maps.importLibrary("maps") as {
+          Map: new (element: HTMLDivElement, options: object) => MapInstance;
+          Marker: new (options: { position: Coordinates; map: MapInstance }) => MarkerInstance;
+        };
+        const placesLibrary = await google.maps.importLibrary("places") as {
+          PlaceAutocompleteElement: new () => PlaceAutocompleteElement;
+        };
+
+        if (cancelled || !autocompleteHost.current) return;
+
+        const map = mapElement.current
+          ? new mapsLibrary.Map(mapElement.current, { center: mapCenter, zoom: 12, disableDefaultUI: true, zoomControl: true })
+          : undefined;
+        const latitudeDelta = SERVICE_RADIUS_KM / 111;
+        const longitudeDelta = SERVICE_RADIUS_KM / (111 * Math.cos(mapCenter.lat * Math.PI / 180));
+        autocompleteElement = new placesLibrary.PlaceAutocompleteElement();
+        autocompleteElement.placeholder = "Buscá calle y altura";
+        autocompleteElement.value = value ?? "";
+        autocompleteElement.includedRegionCodes = ["ar"];
+        autocompleteElement.locationRestriction = {
+          north: mapCenter.lat + latitudeDelta,
+          south: mapCenter.lat - latitudeDelta,
+          east: mapCenter.lng + longitudeDelta,
+          west: mapCenter.lng - longitudeDelta,
+        };
+        autocompleteHost.current.replaceChildren(autocompleteElement);
+
+        let marker: MarkerInstance | undefined;
+        autocompleteElement.addEventListener("gmp-select", async (event) => {
+          try {
+            const place = (event as PlaceSelectionEvent).placePrediction?.toPlace();
+            if (!place) return;
+
+            await place.fetchFields({ fields: ["id", "formattedAddress", "location", "addressComponents"] });
+            const location = place.location;
+            const latitude = location?.lat();
+            const longitude = location?.lng();
+            if (typeof latitude !== "number" || !Number.isFinite(latitude) || typeof longitude !== "number" || !Number.isFinite(longitude)) {
+              setAreaError("No pudimos obtener coordenadas válidas para esa dirección. Elegí otra sugerencia.");
+              return;
+            }
+
+            const coordinates = { latitude, longitude };
+            if (!isWithinServiceArea(coordinates)) {
+              setAreaError(`Esta dirección está a ${distanceInKm(VILLA_CONSTITUCION_CENTER, coordinates).toFixed(1)} km. Por ahora Delivery Now cubre hasta ${SERVICE_RADIUS_KM} km desde Villa Constitución.`);
+              setValue(`${name}.mapConfirmed`, false, { shouldValidate: true });
+              return;
+            }
+
+            const mapCoordinates = { lat: latitude, lng: longitude };
+            map?.setCenter(mapCoordinates);
+            map?.setZoom(16);
+            if (marker) marker.setPosition(mapCoordinates);
+            else if (map) marker = new mapsLibrary.Marker({ position: mapCoordinates, map });
+
+            const part = (type: string) => place.addressComponents?.find((component) => component.types?.includes(type))?.longText ?? "";
+            setAreaError("");
+            setValue(`${name}.formattedAddress`, place.formattedAddress ?? "", { shouldValidate: true });
+            setValue(`${name}.placeId`, place.id ?? "", { shouldValidate: true });
+            setValue(`${name}.latitude`, latitude, { shouldValidate: true });
+            setValue(`${name}.longitude`, longitude, { shouldValidate: true });
+            setValue(`${name}.city`, part("locality") || part("administrative_area_level_2"), { shouldValidate: true });
+            setValue(`${name}.province`, part("administrative_area_level_1"), { shouldValidate: true });
+            setValue(`${name}.postalCode`, part("postal_code"));
+            setValue(`${name}.streetNumber`, part("street_number"));
+            setValue(`${name}.mapConfirmed`, Boolean(place.id), { shouldValidate: true });
+          } catch {
+            setAreaError("No pudimos confirmar esa dirección. Intentá seleccionar otra sugerencia.");
+            setValue(`${name}.mapConfirmed`, false, { shouldValidate: true });
+          }
+        });
+
+        setReady(true);
+      } catch {
+        if (!cancelled) setLoadError("No se pudo cargar el buscador de direcciones. Revisá la configuración de Google Maps.");
+      }
+    };
+
+    void initialize();
+    return () => {
+      cancelled = true;
+      autocompleteElement?.remove();
+    };
+  }, [apiKey, name, setValue, value]);
+
+  return (
+    <div className="grid gap-2">
+      <label className="grid gap-1 text-sm font-medium">
+        {label}
+        <div className="relative">
+          <MapPin className="pointer-events-none absolute left-3 top-3.5 z-10 size-4 text-yellow-400" />
+          <div ref={autocompleteHost} className="min-h-11 rounded-lg bg-zinc-900 pl-9 [&_gmp-place-autocomplete]:w-full" />
+        </div>
+      </label>
+      {apiKey ? <>
+        <div ref={mapElement} className="h-48 overflow-hidden rounded-xl border border-white/10 bg-zinc-900" aria-label="Mapa para confirmar la dirección" />
+        <p className="text-xs text-zinc-400">{ready ? `Seleccioná una sugerencia y verificá el marcador. Cobertura: hasta ${SERVICE_RADIUS_KM} km desde Villa Constitución.` : "Cargando buscador de direcciones…"}</p>
+      </> : <p className="text-xs text-amber-300">El buscador de direcciones se habilita al configurar Google Places.</p>}
+      {(loadError || areaError || error) && <p role="alert" className="text-xs text-red-400">{loadError || areaError || error}</p>}
+    </div>
+  );
+}
