@@ -22,6 +22,7 @@ const assignmentSchema = z.object({
   courierId: z.string().uuid(),
 });
 const serviceToggleSchema = z.object({ id: z.string().uuid(), active: z.enum(["true", "false"]) });
+const statusSchema = z.object({ orderId: z.string().uuid(), status: z.enum(["confirmed", "rejected", "cancelled", "incident"]) });
 
 function notice(message: string, error = false): never {
   redirect(`/admin?${error ? "error" : "notice"}=${encodeURIComponent(message)}`);
@@ -110,4 +111,21 @@ export async function assignOrder(formData: FormData) {
   ]);
   revalidatePath("/admin");
   notice("Pedido asignado al cadete.");
+}
+
+export async function changeOrderStatus(formData: FormData) {
+  const parsed = statusSchema.safeParse({ orderId: formData.get("orderId"), status: formData.get("status") });
+  if (!parsed.success) notice("El cambio de estado no es válido.", true);
+
+  const current = await requireRole("admin");
+  const { error } = await current.supabase.rpc("transition_order_status", {
+    order_id: parsed.data.orderId,
+    target_status: parsed.data.status,
+    reason_text: "Actualizado desde administración",
+    delivery_pin: null,
+  });
+  if (error) notice("No pudimos actualizar el estado del pedido.", true);
+
+  revalidatePath("/admin");
+  notice(parsed.data.status === "confirmed" ? "Pedido confirmado y listo para asignar." : "Estado del pedido actualizado.");
 }
