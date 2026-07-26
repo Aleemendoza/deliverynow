@@ -23,9 +23,10 @@ export function QuickEstimator() {
   return (
     <section className="rounded-2xl border border-white/10 bg-zinc-900 p-5 shadow-2xl">
       <h2 className="mb-4 text-lg font-bold">Calculá tu envío</h2>
-      <form className="grid gap-3 md:grid-cols-3" noValidate onSubmit={continueToOrder}>
+      <form autoComplete="off" className="grid gap-3 md:grid-cols-3" noValidate onSubmit={continueToOrder}>
         <div>
           <input
+            autoComplete="off"
             aria-describedby={submitted && !pickupIsValid ? "pickup-error" : undefined}
             aria-invalid={submitted && !pickupIsValid}
             aria-label="Dirección de retiro"
@@ -38,6 +39,7 @@ export function QuickEstimator() {
         </div>
         <div>
           <input
+            autoComplete="off"
             aria-describedby={submitted && !deliveryIsValid ? "delivery-error" : undefined}
             aria-invalid={submitted && !deliveryIsValid}
             aria-label="Dirección de entrega"

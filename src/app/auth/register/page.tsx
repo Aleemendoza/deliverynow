@@ -1,5 +1,15 @@
 "use client";
+
 import Link from "next/link";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-export default function Register(){const [message,setMessage]=useState("");const signUp=async(form:FormData)=>{const supabase=createSupabaseBrowserClient();const {error}=await supabase.auth.signUp({email:String(form.get("email")),password:String(form.get("password")),options:{emailRedirectTo:`${window.location.origin}/auth/callback`}});setMessage(error?error.message:"Revisá tu correo para verificar la cuenta.")};return <main className="mx-auto max-w-md px-4 py-20"><h1 className="text-3xl font-bold">Crear cuenta</h1><form action={signUp} className="mt-7 grid gap-3"><input required name="email" type="email" placeholder="Correo" className="rounded-lg bg-zinc-900 px-4 py-3"/><input required minLength={8} name="password" type="password" placeholder="Contraseña (mínimo 8 caracteres)" className="rounded-lg bg-zinc-900 px-4 py-3"/><button className="rounded-lg bg-yellow-400 py-3 font-bold text-black">Crear cuenta</button></form>{message&&<p role="status" className="mt-4 text-sm text-zinc-300">{message}</p>}<Link href="/auth/login" className="mt-5 block text-sm text-yellow-400">Ya tengo cuenta</Link></main>}
+
+export default function Register() {
+  const [message, setMessage] = useState("");
+  const signUp = async (form: FormData) => {
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signUp({ email: String(form.get("email")), password: String(form.get("password")), options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
+    setMessage(error ? error.message : "Revisá tu correo para verificar la cuenta.");
+  };
+  return <main className="mx-auto max-w-md px-4 py-20"><h1 className="text-3xl font-bold">Crear cuenta</h1><form autoComplete="off" action={signUp} className="mt-7 grid gap-3"><input autoComplete="off" required name="email" type="email" placeholder="Correo" className="rounded-lg bg-zinc-900 px-4 py-3"/><input autoComplete="off" required minLength={8} name="password" type="password" placeholder="Contraseña (mínimo 8 caracteres)" className="rounded-lg bg-zinc-900 px-4 py-3"/><button className="rounded-lg bg-yellow-400 py-3 font-bold text-black">Crear cuenta</button></form>{message && <p role="status" className="mt-4 text-sm text-zinc-300">{message}</p>}<Link href="/auth/login" className="mt-5 block text-sm text-yellow-400">Ya tengo cuenta</Link></main>;
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogIn, LogOut, Menu, PackagePlus, PanelTop, ShieldCheck, X, Zap } from "lucide-react";
+import { LogIn, LogOut, Menu, PackagePlus, PanelTop, X, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
