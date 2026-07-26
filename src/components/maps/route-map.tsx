@@ -26,9 +26,11 @@ export function RouteMap({ pickup, delivery, encodedPolyline }: Props) {
         const google = await loadGoogleMaps(apiKey);
         const mapsLibrary = await google.maps.importLibrary("maps") as {
           Map: new (element: HTMLDivElement, options: object) => MapInstance;
-          Marker: new (options: { map: MapInstance; position: MapCoordinates; label: string; title: string }) => unknown;
           Polyline: new (options: { map: MapInstance; path: LatLng[]; strokeColor: string; strokeOpacity: number; strokeWeight: number }) => unknown;
           LatLngBounds: new () => BoundsInstance;
+        };
+        const markerLibrary = await google.maps.importLibrary("marker") as {
+          Marker: new (options: { map: MapInstance; position: MapCoordinates; label: string; title: string }) => unknown;
         };
         const geometryLibrary = await google.maps.importLibrary("geometry") as { encoding: { decodePath: (encodedPath: string) => LatLng[] } };
         if (cancelled || !element.current) return;
@@ -41,8 +43,8 @@ export function RouteMap({ pickup, delivery, encodedPolyline }: Props) {
         bounds.extend(start);
         bounds.extend(end);
         path.forEach((point) => bounds.extend(point));
-        new mapsLibrary.Marker({ map, position: start, label: "R", title: "Retiro" });
-        new mapsLibrary.Marker({ map, position: end, label: "E", title: "Entrega" });
+        new markerLibrary.Marker({ map, position: start, label: "R", title: "Retiro" });
+        new markerLibrary.Marker({ map, position: end, label: "E", title: "Entrega" });
         new mapsLibrary.Polyline({ map, path, strokeColor: "#38bdf8", strokeOpacity: 0.9, strokeWeight: 5 });
         map.fitBounds(bounds, { top: 48, right: 32, bottom: 48, left: 32 });
       } catch {

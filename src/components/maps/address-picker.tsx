@@ -23,7 +23,7 @@ type PlaceAutocompleteElement = HTMLElement & {
   includedRegionCodes: string[];
   locationRestriction: { north: number; south: number; east: number; west: number };
 };
-type PlaceSelectionEvent = Event & { placePrediction: { toPlace: () => SelectedPlace } };
+type PlaceSelectionEvent = Event & { placePrediction: { placeId?: string; toPlace: () => SelectedPlace } };
 type LatLng = { lat: () => number; lng: () => number };
 type MapInstance = {
   setCenter: (position: Coordinates) => void;
@@ -66,6 +66,8 @@ export function AddressPicker({ name, label, setValue, value, error }: Props) {
         const google = await loadGoogleMaps(apiKey);
         const mapsLibrary = await google.maps.importLibrary("maps") as {
           Map: new (element: HTMLDivElement, options: object) => MapInstance;
+        };
+        const markerLibrary = await google.maps.importLibrary("marker") as {
           Marker: new (options: { draggable: boolean; position: Coordinates; map: MapInstance }) => MarkerInstance;
         };
         const placesLibrary = await google.maps.importLibrary("places") as {
@@ -111,20 +113,25 @@ export function AddressPicker({ name, label, setValue, value, error }: Props) {
             return;
           }
 
-          if (marker) marker.setPosition(position);
-          else if (map) {
-            marker = new mapsLibrary.Marker({ draggable: true, position, map });
-            marker.addListener("dragend", (event) => {
-              const draggedPosition = coordinatesFromLatLng(event.latLng);
-              if (draggedPosition) updateMarkerPosition(draggedPosition);
-            });
-          }
-
           lastValidPosition = position;
           setAreaError("");
           setValue(`${name}.latitude`, position.lat, { shouldValidate: true });
           setValue(`${name}.longitude`, position.lng, { shouldValidate: true });
           setValue(`${name}.mapConfirmed`, true, { shouldValidate: true });
+
+          try {
+            if (marker) marker.setPosition(position);
+            else if (map) {
+              marker = new markerLibrary.Marker({ draggable: true, position, map });
+              marker.addListener("dragend", (event) => {
+                const draggedPosition = coordinatesFromLatLng(event.latLng);
+                if (draggedPosition) updateMarkerPosition(draggedPosition);
+              });
+            }
+          } catch (markerError) {
+            // The selected address remains valid even if Maps cannot render its marker.
+            console.error("No se pudo mostrar el marcador de la dirección seleccionada.", markerError);
+          }
         };
 
         map?.addListener("click", (event) => {
@@ -139,7 +146,8 @@ export function AddressPicker({ name, label, setValue, value, error }: Props) {
 
         autocompleteElement.addEventListener("gmp-select", async (event) => {
           try {
-            const place = (event as PlaceSelectionEvent).placePrediction?.toPlace();
+            const prediction = (event as PlaceSelectionEvent).placePrediction;
+            const place = prediction?.toPlace();
             if (!place) return;
 
             await place.fetchFields({ fields: ["id", "formattedAddress", "location", "addressComponents"] });
@@ -163,15 +171,24 @@ export function AddressPicker({ name, label, setValue, value, error }: Props) {
             map?.setZoom(16);
 
             const part = (type: string) => place.addressComponents?.find((component) => component.types?.includes(type))?.longText ?? "";
-            setValue(`${name}.formattedAddress`, place.formattedAddress ?? "", { shouldValidate: true });
-            setValue(`${name}.placeId`, place.id ?? "", { shouldValidate: true });
+            const formattedAddress = place.formattedAddress ?? "";
+            const placeId = place.id ?? prediction.placeId ?? "";
+            if (!formattedAddress || !placeId) {
+              setAreaError("Google no devolvió todos los datos para confirmar esta dirección. Elegí otra sugerencia.");
+              setValue(`${name}.mapConfirmed`, false, { shouldValidate: true });
+              return;
+            }
+
+            setValue(`${name}.formattedAddress`, formattedAddress, { shouldValidate: true });
+            setValue(`${name}.placeId`, placeId, { shouldValidate: true });
             setValue(`${name}.city`, part("locality") || part("administrative_area_level_2"), { shouldValidate: true });
             setValue(`${name}.province`, part("administrative_area_level_1"), { shouldValidate: true });
             setValue(`${name}.postalCode`, part("postal_code"));
             setValue(`${name}.streetNumber`, part("street_number"));
-            selectedAddress = Boolean(place.id);
+            selectedAddress = true;
             updateMarkerPosition(mapCoordinates);
-          } catch {
+          } catch (selectionError) {
+            console.error("No se pudo confirmar la dirección seleccionada.", selectionError);
             setAreaError("No pudimos confirmar esa dirección. Intentá seleccionar otra sugerencia.");
             setValue(`${name}.mapConfirmed`, false, { shouldValidate: true });
           }
