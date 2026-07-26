@@ -27,7 +27,7 @@ function scheduledAt(draft: OrderDraft) {
   return `${draft.scheduledDate}T${startTime}:00-03:00`;
 }
 
-export async function createOrder(draft: OrderDraft) {
+export async function createOrder(draft: OrderDraft, customerId: string) {
   const supabase = getSupabaseServerClient();
   const estimate = await estimateOrder(draft);
   const payload = {
@@ -43,6 +43,10 @@ export async function createOrder(draft: OrderDraft) {
   const { data, error } = await supabase.rpc("create_guest_order", { payload });
   if (error || !data) throw new Error(error?.message === "SERVICE_UNAVAILABLE" ? "El servicio seleccionado no está disponible" : "No se pudo registrar el pedido");
   const result = data as { id?: string; trackingCode: string; status: string; pin?: string; duplicate: boolean };
+  if (!result.duplicate && result.id) {
+    const { error: customerError } = await supabase.from("orders").update({ customer_id: customerId }).eq("id", result.id).is("customer_id", null);
+    if (customerError) throw new Error("No se pudo vincular el pedido a tu cuenta");
+  }
   if (!result.duplicate && result.id) {
     const { data: couriers } = await supabase.from("couriers").select("profile_id").eq("is_active", true).eq("is_online", true).returns<Array<{ profile_id: string }>>();
     await Promise.all((couriers ?? []).map(async ({ profile_id }) => {

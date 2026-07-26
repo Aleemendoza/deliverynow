@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { UserRole } from "@/types/domain";
 
-const protectedRoles: Record<string, UserRole> = { "/courier": "courier", "/admin": "admin" };
+const protectedRoles: Record<string, UserRole> = { "/solicitar": "customer", "/courier": "courier", "/admin": "admin" };
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -29,4 +29,4 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/courier/:path*", "/admin/:path*", "/auth/:path*"] };
+export const config = { matcher: ["/solicitar/:path*", "/courier/:path*", "/admin/:path*", "/auth/:path*"] };
