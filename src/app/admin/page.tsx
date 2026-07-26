@@ -1,6 +1,7 @@
 import { assignOrder, changeOrderStatus, createPricingRule, createServiceType, setServiceTypeStatus } from "./actions";
 import { requireRole } from "@/lib/auth/session";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { SiteHeader } from "@/components/site-header";
 
 type SearchParams = Promise<{ notice?: string; error?: string }>;
 type PricingRule = { id: string; base_price: number; included_km: number; price_per_extra_km: number; minimum_price: number; valid_from: string };
@@ -34,7 +35,7 @@ export default async function Admin({ searchParams }: { searchParams: SearchPara
   const orders = (ordersResult.data ?? []) as Order[];
   const couriers = (couriersResult.data ?? []) as Courier[];
 
-  return <main className="mx-auto max-w-6xl px-4 py-8">
+  return <><SiteHeader/><main className="mx-auto max-w-6xl px-4 py-8">
     <header><p className="font-bold text-sky-400">ADMINISTRACIÓN</p><h1 className="mt-2 text-3xl font-bold">Operación de Delivery Now</h1><p className="mt-2 text-sm text-zinc-400">Configurá los servicios, la tarifa y la asignación de pedidos desde un único lugar.</p></header>
     {params.notice && <p role="status" className="mt-5 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">{params.notice}</p>}
     {params.error && <p role="alert" className="mt-5 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-100">{params.error}</p>}
@@ -51,7 +52,7 @@ export default async function Admin({ searchParams }: { searchParams: SearchPara
     </section>
 
     <section className="mt-8 rounded-2xl border border-white/10 bg-zinc-900 p-5"><div><h2 className="text-lg font-bold">Bandeja de pedidos</h2><p className="mt-1 text-sm text-zinc-400">Últimos 20 pedidos. Confirmá, rechazá o asigná cada pedido desde esta bandeja.</p></div><div className="mt-5 overflow-x-auto"><table className="min-w-full text-left text-sm"><thead className="border-b border-white/10 text-xs uppercase text-zinc-400"><tr><th className="pb-3 pr-4">Pedido</th><th className="pb-3 pr-4">Cliente</th><th className="pb-3 pr-4">Servicio</th><th className="pb-3 pr-4">Total</th><th className="pb-3 pr-4">Estado</th><th className="pb-3">Acción</th></tr></thead><tbody>{orders.length ? orders.map((order) => <tr className="border-b border-white/5" key={order.id}><td className="py-4 pr-4 font-semibold">{order.tracking_code}<span className="mt-1 block text-xs font-normal text-zinc-500">{new Date(order.created_at).toLocaleString("es-AR")}</span></td><td className="py-4 pr-4">{order.guest_name ?? "—"}<span className="mt-1 block text-xs text-zinc-500">{order.guest_email ?? ""}</span></td><td className="py-4 pr-4">{order.service_types?.[0]?.name ?? "—"}</td><td className="py-4 pr-4">{order.estimated_price === null ? "—" : money.format(order.estimated_price)}</td><td className="py-4 pr-4"><span className="rounded-full bg-white/10 px-2 py-1 text-xs">{order.status.replaceAll("_", " ")}</span></td><td className="py-4">{order.status === "pending_confirmation" ? <div className="flex gap-2"><StatusButton orderId={order.id} status="confirmed" label="Confirmar" tone="sky" /><StatusButton orderId={order.id} status="rejected" label="Rechazar" tone="red" /></div> : order.status === "confirmed" ? <form action={assignOrder} className="flex min-w-48 gap-2"><input type="hidden" name="orderId" value={order.id} /><select required name="courierId" defaultValue="" className="min-w-0 rounded-lg bg-zinc-800 px-2 py-2 text-xs"><option value="" disabled>Asignar cadete</option>{couriers.map((courier) => <option value={courier.id} key={courier.id}>{courier.profiles?.[0]?.full_name || courier.profiles?.[0]?.email || "Cadete"}{courier.is_online ? " · online" : ""}</option>)}</select><button disabled={!couriers.length} className="rounded-lg bg-sky-400 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-40">Asignar</button></form> : <span className="text-xs text-zinc-500">Sin acción</span>}</td></tr>) : <tr><td colSpan={6} className="py-8 text-center text-zinc-400">Aún no hay pedidos.</td></tr>}</tbody></table></div></section>
-  </main>;
+  </main></>;
 }
 
 function NumberField({ name, label, defaultValue, step = "1" }: { name: string; label: string; defaultValue?: number; step?: string }) {
