@@ -11,8 +11,8 @@ type SessionProfile = { fullName: string | null; role: UserRole } | null;
 const publicLinks = [{ href: "/servicios", label: "Servicios" }, { href: "/precios", label: "Precios" }, { href: "/seguimiento", label: "Seguimiento" }];
 const roleLinks: Record<UserRole, Array<{ href: string; label: string }>> = {
   customer: [{ href: "/account", label: "Mi cuenta" }, { href: "/solicitar", label: "Nuevo pedido" }],
-  courier: [{ href: "/courier", label: "Panel" }, { href: "/courier/orders", label: "Mis pedidos" }],
-  admin: [{ href: "/admin", label: "Administración" }],
+  courier: [{ href: "/courier/profile", label: "Mi perfil" }, { href: "/courier", label: "Panel" }, { href: "/courier/orders", label: "Mis pedidos" }],
+  admin: [{ href: "/admin/profile", label: "Mi perfil" }, { href: "/admin", label: "Administración" }],
 };
 
 export function SiteNavigation({ profile }: { profile: SessionProfile }) {
