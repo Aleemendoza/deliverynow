@@ -4,20 +4,33 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { OrderDraft } from "./schema";
 import type { PricingRule } from "@/lib/pricing/calculate";
 import { sendPushToProfile } from "@/lib/notifications/push";
+import { logOrderDebug } from "@/lib/observability/order-debug";
 
 type RuleRow = { base_price: number; included_km: number; price_per_extra_km: number; minimum_price: number; configuration: { serviceSurcharges?: Record<string, number> } | null };
+type DatabaseError = { code?: string; details?: string | null; hint?: string | null; message: string };
+
 const priceRule = (row: RuleRow): PricingRule => ({ basePrice: Number(row.base_price), includedKm: Number(row.included_km), pricePerExtraKm: Number(row.price_per_extra_km), minimumPrice: Number(row.minimum_price), serviceSurcharges: row.configuration?.serviceSurcharges ?? {} });
 
-export async function estimateOrder(draft: Pick<OrderDraft, "pickup" | "delivery" | "serviceType" | "product">) {
+function orderCreationError(error: DatabaseError | null) {
+  if (!error) return new Error("No se pudo registrar el pedido. Referencia: ORDER_RPC_EMPTY");
+  if (error.message === "SERVICE_UNAVAILABLE") return new Error("El servicio seleccionado no esta disponible");
+  if (error.code === "42501") return new Error("El servidor no tiene permiso para crear pedidos. Aplica la migracion de permisos e intenta nuevamente. Referencia: 42501");
+  if (error.code === "42883" || error.code === "PGRST202") return new Error("Falta actualizar la funcion de creacion de pedidos en la base de datos. Referencia: ORDER_RPC_MISSING");
+  if (error.code === "23503") return new Error("El servicio seleccionado ya no esta disponible. Elegi otro servicio e intenta nuevamente. Referencia: 23503");
+  return new Error(`No se pudo registrar el pedido. Referencia: ${error.code ?? "ORDER_RPC_UNKNOWN"}`);
+}
+
+export async function estimateOrder(draft: Pick<OrderDraft, "pickup" | "delivery" | "serviceType" | "product">, requestId?: string) {
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase.from("pricing_rules").select("base_price,included_km,price_per_extra_km,minimum_price,configuration").lte("valid_from", new Date().toISOString()).or(`valid_to.is.null,valid_to.gt.${new Date().toISOString()}`).order("valid_from", { ascending: false }).limit(1).maybeSingle<RuleRow>();
+  logOrderDebug("order.pricing.responded", { requestId, hasPricingRule: Boolean(data), databaseCode: error?.code });
   if (error || !data) throw new Error("No existe una tarifa vigente configurada");
-  return calculateRouteEstimate(draft.pickup, draft.delivery, draft.serviceType, priceRule(data));
+  return calculateRouteEstimate(draft.pickup, draft.delivery, draft.serviceType, priceRule(data), requestId);
 }
 
 function normalizePhone(value: string) {
   const phone = parsePhoneNumberFromString(value, "AR");
-  if (!phone?.isValid()) throw new Error("El teléfono no es válido");
+  if (!phone?.isValid()) throw new Error("El telefono no es valido");
   return phone.number;
 }
 
@@ -27,9 +40,10 @@ function scheduledAt(draft: OrderDraft) {
   return `${draft.scheduledDate}T${startTime}:00-03:00`;
 }
 
-export async function createOrder(draft: OrderDraft, customerId: string) {
+export async function createOrder(draft: OrderDraft, customerId: string, requestId?: string) {
   const supabase = getSupabaseServerClient();
-  const estimate = await estimateOrder(draft);
+  logOrderDebug("order.creation.started", { requestId, serviceType: draft.serviceType, deliverySchedule: draft.deliverySchedule, urgent: draft.urgent });
+  const estimate = await estimateOrder(draft, requestId);
   const payload = {
     ...draft,
     senderPhone: normalizePhone(draft.senderPhone),
@@ -41,19 +55,23 @@ export async function createOrder(draft: OrderDraft, customerId: string) {
     priceSnapshot: estimate.price,
   };
   const { data, error } = await supabase.rpc("create_guest_order", { payload });
+  logOrderDebug("order.rpc.responded", { requestId, hasData: Boolean(data), databaseCode: error?.code });
   if (error) console.error("No se pudo crear el pedido mediante create_guest_order.", { code: error.code, details: error.details, hint: error.hint, message: error.message });
-  if (error || !data) throw new Error(error?.message === "SERVICE_UNAVAILABLE" ? "El servicio seleccionado no está disponible" : "No se pudo registrar el pedido");
+  if (error || !data) throw orderCreationError(error);
+
   const result = data as { id?: string; trackingCode: string; status: string; pin?: string; duplicate: boolean };
   if (!result.duplicate && result.id) {
     const { error: customerError } = await supabase.from("orders").update({ customer_id: customerId }).eq("id", result.id).is("customer_id", null);
+    logOrderDebug("order.customer_link.responded", { requestId, databaseCode: customerError?.code });
     if (customerError) throw new Error("No se pudo vincular el pedido a tu cuenta");
   }
   if (!result.duplicate && result.id) {
     const { data: couriers } = await supabase.from("couriers").select("profile_id").eq("is_active", true).eq("is_online", true).returns<Array<{ profile_id: string }>>();
     await Promise.all((couriers ?? []).map(async ({ profile_id }) => {
-      await supabase.from("notifications").insert({ user_id: profile_id, order_id: result.id, channel: "in_app", type: "new_order", title: "Nuevo pedido disponible", body: `Pedido ${result.trackingCode} espera asignación`, status: "pending" });
-      await sendPushToProfile(profile_id, "Nuevo pedido disponible", `Pedido ${result.trackingCode} espera asignación`, "/courier/orders");
+      await supabase.from("notifications").insert({ user_id: profile_id, order_id: result.id, channel: "in_app", type: "new_order", title: "Nuevo pedido disponible", body: `Pedido ${result.trackingCode} espera asignacion`, status: "pending" });
+      await sendPushToProfile(profile_id, "Nuevo pedido disponible", `Pedido ${result.trackingCode} espera asignacion`, "/courier/orders");
     }));
   }
+  logOrderDebug("order.creation.completed", { requestId, duplicate: result.duplicate });
   return { ...result, estimate };
 }

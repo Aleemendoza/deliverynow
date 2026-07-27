@@ -1,4 +1,5 @@
 import { calculatePrice, type PricingRule } from "@/lib/pricing/calculate";
+import { logOrderDebug } from "@/lib/observability/order-debug";
 import type { ServiceType } from "@/types/domain";
 
 type Coordinates = { latitude: number; longitude: number };
@@ -15,9 +16,11 @@ function toGoogleLatLng({ latitude, longitude }: Coordinates) {
   return { latitude, longitude };
 }
 
-export async function calculateRouteEstimate(pickup: Coordinates, delivery: Coordinates, serviceType: ServiceType, pricing: PricingRule): Promise<RouteEstimate> {
+export async function calculateRouteEstimate(pickup: Coordinates, delivery: Coordinates, serviceType: ServiceType, pricing: PricingRule, requestId?: string): Promise<RouteEstimate> {
   const apiKey = process.env.GOOGLE_MAPS_SERVER_API_KEY;
   if (!apiKey) throw new Error("GOOGLE_MAPS_SERVER_API_KEY is not configured");
+
+  logOrderDebug("order.route.requested", { requestId, serviceType, hasDistinctPoints: pickup.latitude !== delivery.latitude || pickup.longitude !== delivery.longitude });
 
   const response = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
     method: "POST",
@@ -40,6 +43,8 @@ export async function calculateRouteEstimate(pickup: Coordinates, delivery: Coor
     routes?: Array<{ distanceMeters?: number; duration?: string; polyline?: { encodedPolyline?: string } }>;
   };
 
+  logOrderDebug("order.route.responded", { requestId, status: response.status, ok: response.ok, googleStatus: payload.error?.status });
+
   if (!response.ok) {
     throw new Error(payload.error?.message ? `Google Routes: ${payload.error.message}` : "Google Routes could not calculate the route");
   }
@@ -51,6 +56,8 @@ export async function calculateRouteEstimate(pickup: Coordinates, delivery: Coor
 
   const durationSeconds = Number.parseFloat(route.duration.replace("s", ""));
   if (!Number.isFinite(durationSeconds)) throw new Error("Google Routes returned an invalid duration");
+
+  logOrderDebug("order.route.calculated", { requestId, distanceMeters: route.distanceMeters, durationSeconds: Math.round(durationSeconds) });
 
   return {
     distanceMeters: route.distanceMeters,
