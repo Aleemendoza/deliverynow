@@ -8,6 +8,7 @@ export async function calculateRouteEstimate(pickup: Coordinates, delivery: Coor
   const apiKey = process.env.GOOGLE_MAPS_SERVER_API_KEY;
   if (!apiKey) throw new Error("GOOGLE_MAPS_SERVER_API_KEY no está configurada");
   const response = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", { method: "POST", headers: { "Content-Type": "application/json", "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline" }, body: JSON.stringify({ origin: { location: { latLng: pickup } }, destination: { location: { latLng: delivery } }, travelMode: "DRIVE", routingPreference: "TRAFFIC_AWARE" }), cache: "no-store" });
+  console.log("response de rutas", response);
   if (!response.ok) throw new Error("Google Routes no pudo calcular la ruta");
   const routes = await response.json() as { routes?: Array<{ distanceMeters?: number; duration?: string; polyline?: { encodedPolyline?: string } }> };
   const route = routes.routes?.[0];
