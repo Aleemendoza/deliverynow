@@ -52,9 +52,18 @@ export async function POST(request: NextRequest) {
   try {
     const accountOrder = { ...parsed.data, senderName: profile.full_name.trim(), senderEmail: profile.email ?? user.email ?? parsed.data.senderEmail };
     const order = await createOrder(accountOrder, customer.id, requestId);
-    if (!order.duplicate && order.estimate) await sendOrderReceivedEmail({ recipient: accountOrder.senderEmail, trackingCode: order.trackingCode, total: order.estimate.price.total, pickup: accountOrder.pickup.formattedAddress, delivery: accountOrder.delivery.formattedAddress, pin: order.pin });
-    logOrderDebug("order.request.completed", { requestId, status: order.duplicate ? 200 : 201, duplicate: order.duplicate });
-    return NextResponse.json({ trackingCode: order.trackingCode, status: order.status, duplicate: order.duplicate }, { status: order.duplicate ? 200 : 201 });
+    let emailStatus: "sent" | "skipped" | "failed" = "skipped";
+    if (!order.duplicate && order.estimate) {
+      try {
+        const email = await sendOrderReceivedEmail({ recipient: accountOrder.senderEmail, trackingCode: order.trackingCode, total: order.estimate.price.total, pickup: accountOrder.pickup.formattedAddress, delivery: accountOrder.delivery.formattedAddress, pin: order.pin });
+        emailStatus = email.skipped ? "skipped" : "sent";
+      } catch (emailError) {
+        emailStatus = "failed";
+        console.error("El pedido fue creado, pero no se pudo enviar el correo de confirmacion.", emailError);
+      }
+    }
+    logOrderDebug("order.request.completed", { requestId, status: order.duplicate ? 200 : 201, duplicate: order.duplicate, emailStatus });
+    return NextResponse.json({ trackingCode: order.trackingCode, status: order.status, duplicate: order.duplicate, emailStatus }, { status: order.duplicate ? 200 : 201 });
   } catch (error) {
     logOrderDebug("order.request.failed", { requestId, errorName: error instanceof Error ? error.name : "UnknownError" });
     return apiError("ORDER_CREATE_FAILED", error instanceof Error ? error.message : "No se pudo registrar el pedido.", 503);
