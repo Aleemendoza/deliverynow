@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { humanizeOrderStatus } from "@/lib/orders/status";
+import { TrackingRealtime } from "@/components/tracking/tracking-realtime";
 
 type Tracking = {
   tracking_code: string;
@@ -36,6 +37,8 @@ export function TrackingLookup({ initialCode = "" }: { initialCode?: string }) {
     }
   };
 
+  const refresh = () => { void submit({ preventDefault() {} } as React.FormEvent); };
+
   return <section className="mt-7 rounded-2xl border border-white/10 bg-zinc-900 p-5">
     <form autoComplete="off" onSubmit={submit} className="grid gap-3">
       <label className="grid gap-1 text-sm">Codigo de seguimiento<input autoComplete="off" required value={code} onChange={(event) => setCode(event.target.value)} placeholder="VC-2026-000001" className="rounded-lg bg-zinc-800 px-4 py-3 uppercase" /></label>
@@ -44,6 +47,7 @@ export function TrackingLookup({ initialCode = "" }: { initialCode?: string }) {
     </form>
     {message && <p role="alert" className="mt-4 text-sm text-red-400">{message}</p>}
     {result && <div className="mt-6">
+      <TrackingRealtime code={code.trim().toUpperCase()} email={email.trim().toLowerCase()} onChanged={refresh}/>
       <p className="text-sm text-zinc-400">{result.service_types?.name ?? "Envio"}</p>
       <h2 className="text-xl font-bold">Estado: {humanizeOrderStatus(result.status)}</h2>
       <ol className="mt-4 space-y-3 border-l border-yellow-400/40 pl-4">{result.order_status_history.map((item) => <li key={`${item.new_status}-${item.created_at}`}><p className="font-medium">{humanizeOrderStatus(item.new_status)}</p><time className="text-sm text-zinc-400">{new Date(item.created_at).toLocaleString("es-AR")}</time></li>)}</ol>

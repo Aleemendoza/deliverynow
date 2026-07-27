@@ -4,6 +4,7 @@ import { Bell, Check, LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PushRegistration } from "@/components/notifications/push-registration";
+import { useRealtimeSubscription, realtimeEnabled } from "@/lib/realtime/subscription";
 import type { UserRole } from "@/types/domain";
 
 type Notification = { id: string; title: string; body: string; type: string; created_at: string; read_at: string | null; order_id: string | null };
@@ -15,7 +16,7 @@ const destinationByRole: Record<UserRole, string> = {
   admin: "/admin",
 };
 
-export function NotificationInbox({ role }: { role: UserRole }) {
+export function NotificationInbox({ role, profileId }: { role: UserRole; profileId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -36,9 +37,11 @@ export function NotificationInbox({ role }: { role: UserRole }) {
 
   useEffect(() => {
     void load();
+    if (realtimeEnabled()) return;
     const intervalId = window.setInterval(() => void load(), 60_000);
     return () => window.clearInterval(intervalId);
   }, [load]);
+  useRealtimeSubscription({ topic: `profile:${profileId}`, event: "notification.created", onEvent: load });
 
   const openNotification = async (notification: Notification) => {
     if (!notification.read_at) {
