@@ -2,7 +2,7 @@ const GOOGLE_MAPS_SCRIPT_ID = "delivery-now-google-maps";
 
 type GoogleMapsNamespace = {
   maps: {
-    importLibrary(libraryName: "maps" | "places" | "marker" | "geometry"): Promise<unknown>;
+    importLibrary(libraryName: "core" | "maps" | "places" | "marker" | "geometry"): Promise<unknown>;
   };
 };
 
