@@ -10,14 +10,14 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Delivery Now | Villa Constitución",
+  title: "Delivery Ya | Villa Constitución",
   description: "Envíos, compras y mandados locales con seguimiento.",
   // Versioned URL forces Chrome/Android to discard the former cached manifest
   // that still referenced the old yellow SVG icon.
   manifest: "/manifest-v2.webmanifest",
   icons: {
-    icon: "/delivery-now-icon-192.png",
-    apple: "/delivery-now-icon-192.png",
+    icon: "/delivery-ya-icon-192.png",
+    apple: "/delivery-ya-icon-192.png",
   },
 };
 

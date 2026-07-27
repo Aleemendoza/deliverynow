@@ -1,4 +1,4 @@
-const GOOGLE_MAPS_SCRIPT_ID = "delivery-now-google-maps";
+const GOOGLE_MAPS_SCRIPT_ID = "delivery-ya-google-maps";
 
 type GoogleMapsNamespace = {
   maps: {
@@ -8,7 +8,7 @@ type GoogleMapsNamespace = {
 
 declare global {
   interface Window {
-    __deliveryNowGoogleMapsInit?: () => void;
+    __deliveryYaGoogleMapsInit?: () => void;
     google?: GoogleMapsNamespace;
   }
 }
@@ -28,7 +28,7 @@ export function loadGoogleMaps(apiKey: string): Promise<GoogleMapsNamespace> {
   loaderPromise = new Promise((resolve, reject) => {
     const existingScript = document.getElementById(GOOGLE_MAPS_SCRIPT_ID) as HTMLScriptElement | null;
 
-    window.__deliveryNowGoogleMapsInit = () => {
+    window.__deliveryYaGoogleMapsInit = () => {
       if (window.google?.maps?.importLibrary) {
         resolve(window.google);
       } else {
@@ -44,7 +44,7 @@ export function loadGoogleMaps(apiKey: string): Promise<GoogleMapsNamespace> {
     const parameters = new URLSearchParams({
       key: apiKey,
       loading: "async",
-      callback: "__deliveryNowGoogleMapsInit",
+      callback: "__deliveryYaGoogleMapsInit",
       v: "weekly",
       language: "es",
       region: "AR",

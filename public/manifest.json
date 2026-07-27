@@ -1,6 +1,6 @@
 {
-  "name": "Delivery Now",
-  "short_name": "Delivery Now",
+  "name": "Delivery Ya",
+  "short_name": "Delivery Ya",
   "description": "Pedidos locales con seguimiento en Villa Constitución.",
   "start_url": "/",
   "scope": "/",
@@ -8,7 +8,7 @@
   "background_color": "#111315",
   "theme_color": "#facc15",
   "icons": [
-    { "src": "/delivery-now-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/delivery-now-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/delivery-ya-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/delivery-ya-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

@@ -29,7 +29,7 @@ export function OrderPushGate({ children }: { children: React.ReactNode }) {
 
   async function enable() {
     if (!key || !("Notification" in window) || !("serviceWorker" in navigator)) {
-      setMessage("Este navegador no permite notificaciones. Abrí Delivery Now desde un navegador compatible o instalá la app.");
+      setMessage("Este navegador no permite notificaciones. Abrí Delivery Ya desde un navegador compatible o instalá la app.");
       return;
     }
     setBusy(true);

@@ -36,7 +36,7 @@ export default async function Admin({ searchParams }: { searchParams: SearchPara
   const couriers = (couriersResult.data ?? []) as Courier[];
 
   return <><SiteHeader/><main className="mx-auto max-w-6xl px-4 py-8">
-    <header><p className="font-bold text-sky-400">ADMINISTRACIÓN</p><h1 className="mt-2 text-3xl font-bold">Operación de Delivery Now</h1><p className="mt-2 text-sm text-zinc-400">Configurá los servicios, la tarifa y la asignación de pedidos desde un único lugar.</p></header>
+    <header><p className="font-bold text-sky-400">ADMINISTRACIÓN</p><h1 className="mt-2 text-3xl font-bold">Operación de Delivery Ya</h1><p className="mt-2 text-sm text-zinc-400">Configurá los servicios, la tarifa y la asignación de pedidos desde un único lugar.</p></header>
     {params.notice && <p role="status" className="mt-5 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">{params.notice}</p>}
     {params.error && <p role="alert" className="mt-5 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-100">{params.error}</p>}
 
