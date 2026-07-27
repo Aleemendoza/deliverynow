@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { FormPrivacy } from "@/components/form-privacy";
 import { ScrollToTop } from "@/components/scroll-to-top";
@@ -13,11 +13,14 @@ export const metadata: Metadata = {
   title: "Delivery Now | Villa Constitución",
   description: "Envíos, compras y mandados locales con seguimiento.",
   manifest: "/manifest.json",
-  themeColor: "#facc15",
   icons: {
     icon: "/delivery-now-icon-192.png",
     apple: "/delivery-now-icon-192.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#facc15",
 };
 
 export default function RootLayout({
