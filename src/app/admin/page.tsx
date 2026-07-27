@@ -40,7 +40,7 @@ export default async function Admin({ searchParams }: { searchParams: SearchPara
     {params.notice && <p role="status" className="mt-5 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">{params.notice}</p>}
     {params.error && <p role="alert" className="mt-5 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-100">{params.error}</p>}
 
-    <section className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">{metrics.map(([label, value]) => <article className="rounded-xl border border-white/10 bg-zinc-900 p-4" key={String(label)}><p className="text-sm text-zinc-400">{label}</p><p className="mt-3 text-2xl font-bold">{value}</p></article>)}</section>
+    <section className="mt-8 grid gap-3 sm:grid-cols-2 md:grid-cols-4">{metrics.map(([label, value]) => <article className="rounded-xl border border-white/10 bg-zinc-900 p-4" key={String(label)}><p className="text-sm text-zinc-400">{label}</p><p className="mt-3 text-2xl font-bold">{value}</p></article>)}</section>
 
     <section className="mt-8 grid gap-5 lg:grid-cols-2">
       <article className="rounded-2xl border border-white/10 bg-zinc-900 p-5"><div className="flex items-start justify-between gap-3"><div><h2 className="text-lg font-bold">Tarifa vigente</h2><p className="mt-1 text-sm text-zinc-400">Al guardar una nueva tarifa, la anterior queda cerrada automáticamente.</p></div><span className={currentPricing ? "rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-300" : "rounded-full bg-red-400/15 px-3 py-1 text-xs font-semibold text-red-300"}>{currentPricing ? "Activa" : "Sin configurar"}</span></div>

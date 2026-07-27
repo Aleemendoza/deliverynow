@@ -31,6 +31,7 @@
 
 html,
 body {
+  width: 100%;
   max-width: 100%;
   overflow-x: clip;
 }
@@ -52,4 +53,25 @@ svg,
 video,
 canvas {
   max-width: 100%;
+}
+
+main,
+header,
+section,
+article,
+form,
+fieldset {
+  min-width: 0;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+gmp-place-autocomplete,
+[class*="gmp-place-autocomplete"] {
+  max-width: 100% !important;
 }
