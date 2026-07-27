@@ -12,12 +12,15 @@ async function dispatch(request: NextRequest) {
   }
 
   try {
-    const [result, cleanup] = await Promise.all([
+    const database = getSupabaseServerClient();
+    const [result, cleanup, dispatchExpiry] = await Promise.all([
       dispatchNotificationOutbox(),
-      getSupabaseServerClient().rpc("cleanup_tracking_realtime_sessions"),
+      database.rpc("cleanup_tracking_realtime_sessions"),
+      database.rpc("expire_dispatch_state"),
     ]);
     if (cleanup.error) throw cleanup.error;
-    return NextResponse.json({ ...result, expiredTrackingSessions: cleanup.data ?? 0 });
+    if (dispatchExpiry.error) throw dispatchExpiry.error;
+    return NextResponse.json({ ...result, expiredTrackingSessions: cleanup.data ?? 0, dispatch: dispatchExpiry.data ?? {} });
   } catch (error) {
     console.error("No se pudo despachar la cola de notificaciones.", error);
     return NextResponse.json({ code: "NOTIFICATION_DISPATCH_FAILED", message: "No se pudo despachar la cola." }, { status: 503 });
