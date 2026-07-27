@@ -39,3 +39,24 @@ export async function sendOrderStatusEmail({ recipient, trackingCode, status }: 
   if (!response.ok) throw new Error("Resend no pudo enviar el correo de estado");
   return response.json() as Promise<{ id: string }>;
 }
+
+export async function sendNotificationEmail({ recipient, title, body, url }: { recipient: string; title: string; body: string; url: string }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!apiKey || !from) return { skipped: true } as const;
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const destination = new URL(url, appUrl).toString();
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to: [recipient],
+      subject: escapeHtml(title),
+      html: `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(body)}</p><p><a href="${escapeHtml(destination)}">Ver pedido</a></p>`,
+    }),
+  });
+  if (!response.ok) throw new Error("Resend no pudo enviar la notificaciÃ³n por correo");
+  return response.json() as Promise<{ id: string }>;
+}

@@ -3,7 +3,6 @@ import { calculateRouteEstimate } from "@/lib/google/routes";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { OrderDraft } from "./schema";
 import type { PricingRule } from "@/lib/pricing/calculate";
-import { sendPushToProfile } from "@/lib/notifications/push";
 import { logOrderDebug } from "@/lib/observability/order-debug";
 
 type RuleRow = { base_price: number; included_km: number; price_per_extra_km: number; minimum_price: number; configuration: { serviceSurcharges?: Record<string, number> } | null };
@@ -41,8 +40,11 @@ function scheduledAt(draft: OrderDraft) {
   return `${draft.scheduledDate}T${startTime}:00-03:00`;
 }
 
-export async function createOrder(draft: OrderDraft, customerId: string, requestId?: string) {
+export async function createOrder(draft: OrderDraft, customerId: string, customerProfileId: string, requestId?: string) {
   const supabase = getSupabaseServerClient();
+  const { count: subscriptionCount, error: subscriptionError } = await supabase.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("profile_id", customerProfileId);
+  if (subscriptionError) throw new Error("No pudimos comprobar tus notificaciones. Intentá nuevamente.");
+  if ((subscriptionCount ?? 0) === 0) throw new Error("Activá las notificaciones para poder confirmar un pedido.");
   logOrderDebug("order.creation.started", { requestId, serviceType: draft.serviceType, deliverySchedule: draft.deliverySchedule, urgent: draft.urgent });
   const estimate = await estimateOrder(draft, requestId);
   const payload = {
@@ -62,16 +64,9 @@ export async function createOrder(draft: OrderDraft, customerId: string, request
 
   const result = data as { id?: string; trackingCode: string; status: string; pin?: string; duplicate: boolean };
   if (!result.duplicate && result.id) {
-    const { error: customerError } = await supabase.from("orders").update({ customer_id: customerId }).eq("id", result.id).is("customer_id", null);
+    const { error: customerError } = await supabase.rpc("link_customer_order_and_emit_created", { order_id_value: result.id, customer_id_value: customerId, actor_id_value: customerProfileId });
     logOrderDebug("order.customer_link.responded", { requestId, databaseCode: customerError?.code });
     if (customerError) throw new Error("No se pudo vincular el pedido a tu cuenta");
-  }
-  if (!result.duplicate && result.id) {
-    const { data: couriers } = await supabase.from("couriers").select("profile_id").eq("is_active", true).eq("is_online", true).returns<Array<{ profile_id: string }>>();
-    await Promise.all((couriers ?? []).map(async ({ profile_id }) => {
-      await supabase.from("notifications").insert({ user_id: profile_id, order_id: result.id, channel: "in_app", type: "new_order", title: "Nuevo pedido disponible", body: `Pedido ${result.trackingCode} espera asignacion`, status: "pending" });
-      await sendPushToProfile(profile_id, "Nuevo pedido disponible", `Pedido ${result.trackingCode} espera asignacion`, "/courier/orders");
-    }));
   }
   logOrderDebug("order.creation.completed", { requestId, duplicate: result.duplicate });
   return { ...result, estimate };

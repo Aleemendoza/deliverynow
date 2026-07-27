@@ -93,22 +93,13 @@ export async function assignOrder(formData: FormData) {
   const parsed = assignmentSchema.safeParse({ orderId: formData.get("orderId"), courierId: formData.get("courierId") });
   if (!parsed.success) notice("Elegí un cadete válido.", true);
 
-  const { actorId, database } = await adminContext();
-  const [{ data: order }, { data: courier }] = await Promise.all([
-    database.from("orders").select("id,status").eq("id", parsed.data.orderId).maybeSingle<{ id: string; status: string }>(),
-    database.from("couriers").select("id,is_active").eq("id", parsed.data.courierId).maybeSingle<{ id: string; is_active: boolean }>(),
-  ]);
-  if (!order || order.status !== "confirmed") notice("Solo se pueden asignar pedidos confirmados.", true);
-  if (!courier?.is_active) notice("El cadete elegido no está activo.", true);
-
-  const { error: updateError } = await database.from("orders").update({ assigned_courier_id: courier.id, status: "assigned", updated_at: new Date().toISOString() }).eq("id", order.id).eq("status", "confirmed");
-  if (updateError) notice("No pudimos asignar el pedido.", true);
-  const { error: assignmentError } = await database.from("order_assignments").insert({ order_id: order.id, courier_id: courier.id, assigned_by: actorId });
-  if (assignmentError) notice("El pedido fue actualizado, pero no se pudo registrar la asignación. Revisalo antes de continuar.", true);
-  await Promise.all([
-    database.from("order_status_history").insert({ order_id: order.id, previous_status: "confirmed", new_status: "assigned", changed_by: actorId, reason: "Asignado desde administración" }),
-    database.from("audit_logs").insert({ actor_id: actorId, action: "order.assigned", entity_type: "order", entity_id: order.id, after_data: { courierId: courier.id } }),
-  ]);
+  const current = await requireRole("admin");
+  const { error } = await current.supabase.rpc("assign_order_to_courier", {
+    order_id_value: parsed.data.orderId,
+    courier_id_value: parsed.data.courierId,
+    reason_text: "Asignado desde administración",
+  });
+  if (error) notice("No pudimos asignar el pedido. Es posible que ya no esté disponible o que el cadete no esté activo.", true);
   revalidatePath("/admin");
   notice("Pedido asignado al cadete.");
 }

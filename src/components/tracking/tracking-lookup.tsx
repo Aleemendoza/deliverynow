@@ -1,11 +1,52 @@
 "use client";
 
 import { useState } from "react";
+import { humanizeOrderStatus } from "@/lib/orders/status";
 
-type Tracking = { tracking_code: string; status: string; created_at: string; scheduled_at: string | null; service_types: { name: string } | null; order_status_history: Array<{ new_status: string; created_at: string }> };
+type Tracking = {
+  tracking_code: string;
+  status: string;
+  created_at: string;
+  scheduled_at: string | null;
+  service_types: { name: string } | null;
+  order_status_history: Array<{ new_status: string; created_at: string }>;
+};
 
 export function TrackingLookup({ initialCode = "" }: { initialCode?: string }) {
-  const [code, setCode] = useState(initialCode); const [email, setEmail] = useState(""); const [result, setResult] = useState<Tracking>(); const [message, setMessage] = useState(""); const [loading, setLoading] = useState(false);
-  const submit = async (event: React.FormEvent) => { event.preventDefault(); setLoading(true); setMessage(""); try { const response = await fetch(`/api/tracking/${encodeURIComponent(code.trim().toUpperCase())}?email=${encodeURIComponent(email.trim().toLowerCase())}`); const payload = await response.json() as Tracking & { message?: string }; if (!response.ok) throw new Error(payload.message ?? "No se pudo consultar el pedido."); setResult(payload); } catch (error) { setResult(undefined); setMessage(error instanceof Error ? error.message : "No se pudo consultar el pedido."); } finally { setLoading(false); } };
-  return <section className="mt-7 rounded-2xl border border-white/10 bg-zinc-900 p-5"><form autoComplete="off" onSubmit={submit} className="grid gap-3"><label className="grid gap-1 text-sm">Código de seguimiento<input autoComplete="off" required value={code} onChange={(event) => setCode(event.target.value)} placeholder="VC-2026-000001" className="rounded-lg bg-zinc-800 px-4 py-3 uppercase" /></label><label className="grid gap-1 text-sm">Correo usado en la solicitud<input autoComplete="off" required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="tu@email.com" className="rounded-lg bg-zinc-800 px-4 py-3" /></label><button disabled={loading} className="rounded-lg bg-yellow-400 px-4 py-3 font-bold text-black disabled:opacity-50">{loading ? "Consultando…" : "Ver pedido"}</button></form>{message && <p role="alert" className="mt-4 text-sm text-red-400">{message}</p>}{result && <div className="mt-6"><p className="text-sm text-zinc-400">{result.service_types?.name ?? "Envío"}</p><h2 className="text-xl font-bold">Estado: {result.status.replaceAll("_", " ")}</h2><ol className="mt-4 space-y-3 border-l border-yellow-400/40 pl-4">{result.order_status_history.map((item) => <li key={`${item.new_status}-${item.created_at}`}><p className="font-medium">{item.new_status.replaceAll("_", " ")}</p><time className="text-sm text-zinc-400">{new Date(item.created_at).toLocaleString("es-AR")}</time></li>)}</ol></div>}</section>;
+  const [code, setCode] = useState(initialCode);
+  const [email, setEmail] = useState("");
+  const [result, setResult] = useState<Tracking>();
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setMessage("");
+    try {
+      const response = await fetch(`/api/tracking/${encodeURIComponent(code.trim().toUpperCase())}?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+      const payload = await response.json() as Tracking & { message?: string };
+      if (!response.ok) throw new Error(payload.message ?? "No se pudo consultar el pedido.");
+      setResult(payload);
+    } catch (error) {
+      setResult(undefined);
+      setMessage(error instanceof Error ? error.message : "No se pudo consultar el pedido.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return <section className="mt-7 rounded-2xl border border-white/10 bg-zinc-900 p-5">
+    <form autoComplete="off" onSubmit={submit} className="grid gap-3">
+      <label className="grid gap-1 text-sm">Codigo de seguimiento<input autoComplete="off" required value={code} onChange={(event) => setCode(event.target.value)} placeholder="VC-2026-000001" className="rounded-lg bg-zinc-800 px-4 py-3 uppercase" /></label>
+      <label className="grid gap-1 text-sm">Correo usado en la solicitud<input autoComplete="off" required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="tu@email.com" className="rounded-lg bg-zinc-800 px-4 py-3" /></label>
+      <button disabled={loading} className="rounded-lg bg-yellow-400 px-4 py-3 font-bold text-black disabled:opacity-50">{loading ? "Consultando..." : "Ver pedido"}</button>
+    </form>
+    {message && <p role="alert" className="mt-4 text-sm text-red-400">{message}</p>}
+    {result && <div className="mt-6">
+      <p className="text-sm text-zinc-400">{result.service_types?.name ?? "Envio"}</p>
+      <h2 className="text-xl font-bold">Estado: {humanizeOrderStatus(result.status)}</h2>
+      <ol className="mt-4 space-y-3 border-l border-yellow-400/40 pl-4">{result.order_status_history.map((item) => <li key={`${item.new_status}-${item.created_at}`}><p className="font-medium">{humanizeOrderStatus(item.new_status)}</p><time className="text-sm text-zinc-400">{new Date(item.created_at).toLocaleString("es-AR")}</time></li>)}</ol>
+    </div>}
+  </section>;
 }

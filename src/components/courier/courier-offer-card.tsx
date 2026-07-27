@@ -1,0 +1,9 @@
+import { MapPin } from "lucide-react";
+import { OrderStatusAction } from "@/components/orders/order-status-action";
+
+export type CourierOffer = { id: string; trackingCode: string; status: "confirmed"; createdAt: string; scheduledAt: string | null; estimatedPrice: number | null; routeDistanceMeters: number | null; routeDurationSeconds: number | null; serviceName: string; pickupDistanceKm: number };
+
+export function CourierOfferCard({ offer }: { offer: CourierOffer }) {
+  const date = new Intl.DateTimeFormat("es-AR", { dateStyle: "short", timeStyle: "short" }).format(new Date(offer.scheduledAt ?? offer.createdAt));
+  return <article className="rounded-2xl border border-sky-400/20 bg-zinc-900 p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-sm font-bold text-brand">Oferta disponible</p><h2 className="mt-1 text-lg font-bold">{offer.serviceName}</h2><p className="mt-1 text-sm text-zinc-400">{date}</p></div><div className="text-right"><p className="font-bold text-brand">${Number(offer.estimatedPrice ?? 0).toLocaleString("es-AR")}</p><p className="mt-1 text-xs text-zinc-400">Código {offer.trackingCode}</p></div></div><div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-zinc-300"><span className="inline-flex items-center gap-1"><MapPin className="size-4 text-sky-300"/>{offer.pickupDistanceKm.toFixed(1)} km hasta el retiro</span><span>{offer.routeDistanceMeters ? `${(offer.routeDistanceMeters / 1000).toFixed(1)} km de recorrido` : "Recorrido a confirmar"}</span>{offer.routeDurationSeconds && <span>{Math.max(1, Math.round(offer.routeDurationSeconds / 60))} min estimados</span>}</div><p className="mt-4 text-xs text-zinc-500">La dirección y los contactos se habilitan al aceptar el pedido.</p><div className="mt-5"><OrderStatusAction orderId={offer.id} status="confirmed"/></div></article>;
+}

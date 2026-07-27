@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClipboardList, PackageCheck, Radar, Wallet } from "lucide-react";
 import { CourierAvailabilityToggle } from "@/components/courier/courier-availability-toggle";
+import { CourierPresence } from "@/components/courier/courier-presence";
 import { PushRegistration } from "@/components/notifications/push-registration";
 import { SiteHeader } from "@/components/site-header";
 import { requireRole } from "@/lib/auth/session";
@@ -16,8 +17,10 @@ export default async function Courier() {
   const completedQuery = courier ? supabase.from("orders").select("id", { count: "exact", head: true }).eq("assigned_courier_id", courier.id).eq("status", "delivered") : Promise.resolve({ count: 0 });
   const [{ count: available }, { count: active }, { count: completed }] = await Promise.all([availableQuery, activeQuery, completedQuery]);
   const metrics = [{ label: "Disponibles", value: available ?? 0, Icon: Radar }, { label: "En curso", value: active ?? 0, Icon: ClipboardList }, { label: "Entregados", value: completed ?? 0, Icon: PackageCheck }, { label: "Movilidad", value: courier?.transport_type ?? "Sin configurar", Icon: Wallet }];
-  return <><SiteHeader/><main className="mx-auto max-w-6xl px-4 py-8"><header className="rounded-2xl border border-brand/20 bg-gradient-to-br from-brand/15 to-zinc-900 p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="font-bold text-brand">PANEL DE CADETE</p><h1 className="mt-2 text-3xl font-bold">Hola, {profile.full_name?.split(" ")[0] || "cadete"}</h1><p className="mt-2 max-w-xl text-zinc-300">Administrá tu disponibilidad, pedidos asignados e historial de entregas desde un solo lugar.</p></div><CourierAvailabilityToggle initialOnline={courier?.is_online ?? false}/></div></header>
+  const online = courier?.is_online ?? false;
+
+  return <><SiteHeader/><main className="mx-auto max-w-6xl px-4 py-8"><header className="rounded-2xl border border-brand/20 bg-gradient-to-br from-brand/15 to-zinc-900 p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="font-bold text-brand">PANEL DE CADETE</p><h1 className="mt-2 text-3xl font-bold">Hola, {profile.full_name?.split(" ")[0] || "cadete"}</h1><p className="mt-2 max-w-xl text-zinc-300">Administrá tu disponibilidad, pedidos asignados e historial de entregas desde un solo lugar.</p></div><CourierAvailabilityToggle initialOnline={online}/></div><CourierPresence online={online}/></header>
     <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">{metrics.map(({ label, value, Icon }) => <article className="rounded-xl bg-zinc-900 p-4" key={label}><Icon className="size-5 text-brand"/><p className="mt-3 text-sm text-zinc-400">{label}</p><p className="mt-1 text-xl font-bold capitalize">{value}</p></article>)}</section>
-    <section className="mt-8 rounded-2xl border border-white/10 bg-zinc-900 p-6"><h2 className="text-xl font-bold">Centro de operaciones</h2><p className="mt-2 text-zinc-400">Consultá origen y destino, llamá a los contactos, abrí la ruta y registrá el retiro, entrega o incidencia.</p><Link href="/courier/orders" className="mt-5 inline-block rounded-lg bg-brand px-4 py-3 text-sm font-bold text-brand-foreground">Ver mis pedidos</Link><PushRegistration/></section>
+    <section className="mt-8 rounded-2xl border border-white/10 bg-zinc-900 p-6"><h2 className="text-xl font-bold">Centro de operaciones</h2><p className="mt-2 text-zinc-400">Consultá ofertas cercanas, luego accedé a datos de retiro y entrega cuando el pedido ya sea tuyo.</p><Link href="/courier/orders" className="mt-5 inline-block rounded-lg bg-brand px-4 py-3 text-sm font-bold text-brand-foreground">Ver pedidos y ofertas</Link><PushRegistration/></section>
   </main></>;
 }
