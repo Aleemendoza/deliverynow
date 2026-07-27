@@ -8,6 +8,13 @@ function base64UrlToUint8Array(value: string) {
   return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
 }
 
+function withTimeout<T>(promise: Promise<T>, message: string, milliseconds = 12_000) {
+  return Promise.race<T>([
+    promise,
+    new Promise<T>((_, reject) => window.setTimeout(() => reject(new Error(message)), milliseconds)),
+  ]);
+}
+
 export function OrderPushGate({ children }: { children: React.ReactNode }) {
   const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const [ready, setReady] = useState(false);
@@ -17,9 +24,13 @@ export function OrderPushGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function check() {
       try {
-        const response = await fetch("/api/push/subscribe", { cache: "no-store" });
+        if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+        await withTimeout(navigator.serviceWorker.register("/sw.js"), "No se pudo preparar las notificaciones.");
+        const response = await withTimeout(fetch("/api/push/subscribe", { cache: "no-store" }), "La comprobación de notificaciones tardó demasiado.");
         const payload = await response.json() as { subscribed?: boolean };
         setReady(response.ok && payload.subscribed === true && Notification.permission === "granted");
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "No se pudo comprobar las notificaciones.");
       } finally {
         setBusy(false);
       }
@@ -35,11 +46,11 @@ export function OrderPushGate({ children }: { children: React.ReactNode }) {
     setBusy(true);
     setMessage("");
     try {
-      const permission = await Notification.requestPermission();
+      const permission = await withTimeout(Notification.requestPermission(), "El navegador no respondió al permiso de notificaciones.");
       if (permission !== "granted") throw new Error("Necesitás permitir las notificaciones para pedir un envío.");
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription() ?? await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64UrlToUint8Array(key) });
-      const response = await fetch("/api/push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(subscription) });
+      const registration = await withTimeout(navigator.serviceWorker.register("/sw.js"), "No se pudo registrar el servicio de notificaciones.");
+      const subscription = await withTimeout(registration.pushManager.getSubscription(), "No se pudo consultar la suscripción push.") ?? await withTimeout(registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64UrlToUint8Array(key) }), "La suscripción push tardó demasiado.");
+      const response = await withTimeout(fetch("/api/push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(subscription) }), "No se pudo guardar la suscripción push.");
       if (!response.ok) throw new Error("No pudimos activar las notificaciones. Intentá nuevamente.");
       setReady(true);
     } catch (error) {
