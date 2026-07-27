@@ -19,17 +19,17 @@ export function CourierOrderCard({ order, showHistory = false }: { order: Courie
   const mapsUrl = pickup?.addresses && delivery?.addresses ? `https://www.google.com/maps/dir/?api=1&origin=${pickup.addresses.latitude},${pickup.addresses.longitude}&destination=${delivery.addresses.latitude},${delivery.addresses.longitude}` : null;
   const isClosed = ["delivered", "cancelled", "rejected"].includes(order.status);
 
-  return <article className="rounded-2xl border border-white/10 bg-zinc-900 p-5 shadow-sm">
+  return <article className="rounded-2xl border border-white/10 bg-zinc-900 p-4 shadow-sm sm:p-5">
     <div className="flex flex-wrap items-start justify-between gap-3">
-      <div><p className="text-sm font-bold text-brand">{order.tracking_code}</p><h2 className="mt-1 text-lg font-bold">{order.service_types?.name ?? "Envío"}</h2><p className="mt-1 text-sm text-zinc-400">{dateTime(order.scheduled_at ?? order.created_at)}</p></div>
-      <div className="text-right"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${statusStyle[order.status] ?? "bg-brand/15 text-brand"}`}>{statusLabel[order.status]}</span><p className="mt-2 font-bold text-brand">${Number(order.final_price ?? order.estimated_price ?? 0).toLocaleString("es-AR")}</p></div>
+      <div className="min-w-0"><p className="break-words text-sm font-bold text-brand">{order.tracking_code}</p><h2 className="mt-1 break-words text-lg font-bold">{order.service_types?.name ?? "Envío"}</h2><p className="mt-1 text-sm text-zinc-400">{dateTime(order.scheduled_at ?? order.created_at)}</p></div>
+      <div className="w-full sm:w-auto sm:text-right"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${statusStyle[order.status] ?? "bg-brand/15 text-brand"}`}>{statusLabel[order.status]}</span><p className="mt-2 font-bold text-brand">${Number(order.final_price ?? order.estimated_price ?? 0).toLocaleString("es-AR")}</p></div>
     </div>
     <div className="mt-5 grid gap-3 md:grid-cols-2">
       {stops.map((stop, index) => <section className="rounded-xl bg-zinc-800/80 p-4" key={stop.type}>
         <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-zinc-400"><MapPin className={index === 0 ? "size-4 text-brand" : "size-4 text-emerald-400"}/>{index === 0 ? "Retiro" : "Entrega"}</p>
         <p className="mt-2 break-words font-semibold">{stop.addresses?.formatted_address ?? "Dirección no disponible"}</p>
         {(stop.addresses?.floor || stop.addresses?.apartment || stop.addresses?.reference || stop.instructions) && <p className="mt-1 text-sm text-zinc-400">{[stop.addresses?.floor && `Piso ${stop.addresses.floor}`, stop.addresses?.apartment && `Dto. ${stop.addresses.apartment}`, stop.addresses?.reference, stop.instructions].filter(Boolean).join(" · ")}</p>}
-        <div className="mt-3 flex items-center justify-between gap-2 text-sm"><span>{stop.contact_name}</span><a className="inline-flex items-center gap-1 text-brand" href={`tel:${stop.contact_phone_e164}`}><Phone className="size-3.5"/>Llamar</a></div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm"><span className="break-words">{stop.contact_name}</span><a className="inline-flex shrink-0 items-center gap-1 text-brand" href={`tel:${stop.contact_phone_e164}`}><Phone className="size-3.5"/>Llamar</a></div>
         {(stop.arrived_at || stop.completed_at) && <p className="mt-2 text-xs text-zinc-500">{stop.completed_at ? `Completado ${dateTime(stop.completed_at)}` : `Llegada ${dateTime(stop.arrived_at)}`}</p>}
       </section>)}
     </div>
