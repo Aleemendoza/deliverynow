@@ -1,0 +1,32 @@
+name: Dispatch notification outbox
+
+on:
+  schedule:
+    # Run off the top of the hour to reduce GitHub Actions scheduling delays.
+    - cron: "2-59/5 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  dispatch:
+    name: Dispatch pending notifications
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    env:
+      APP_URL: https://deliveryya.vercel.app
+    steps:
+      - name: Call the protected notification dispatcher
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "Missing Actions secret: CRON_SECRET" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --request POST \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            --url "$APP_URL/api/cron/notifications"
