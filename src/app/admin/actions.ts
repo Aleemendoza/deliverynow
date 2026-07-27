@@ -23,6 +23,7 @@ const assignmentSchema = z.object({
 });
 const serviceToggleSchema = z.object({ id: z.string().uuid(), active: z.enum(["true", "false"]) });
 const statusSchema = z.object({ orderId: z.string().uuid(), status: z.enum(["confirmed", "rejected", "cancelled", "incident"]) });
+const userRoleSchema = z.object({ profileId: z.string().uuid(), role: z.enum(["customer", "courier"]) });
 
 function notice(message: string, error = false): never {
   redirect(`/admin?${error ? "error" : "notice"}=${encodeURIComponent(message)}`);
@@ -119,4 +120,30 @@ export async function changeOrderStatus(formData: FormData) {
 
   revalidatePath("/admin");
   notice(parsed.data.status === "confirmed" ? "Pedido confirmado y listo para asignar." : "Estado del pedido actualizado.");
+}
+
+export async function changeUserRole(formData: FormData) {
+  const parsed = userRoleSchema.safeParse({ profileId: formData.get("profileId"), role: formData.get("role") });
+  if (!parsed.success) redirect("/admin/users?error=No+pudimos+identificar+el+usuario+o+el+rol.");
+
+  const { actorId, database } = await adminContext();
+  if (parsed.data.profileId === actorId) redirect("/admin/users?error=No+pod%C3%A9s+modificar+tu+propio+rol+desde+este+panel.");
+
+  const { data: profile, error: profileError } = await database.from("profiles").select("id,role").eq("id", parsed.data.profileId).maybeSingle<{ id: string; role: "customer" | "courier" | "admin" }>();
+  if (profileError || !profile) redirect("/admin/users?error=El+usuario+ya+no+est%C3%A1+disponible.");
+  if (profile.role === "admin") redirect("/admin/users?error=Los+administradores+se+gestionan+fuera+de+este+panel.");
+  if (profile.role === parsed.data.role) redirect("/admin/users?notice=El+usuario+ya+ten%C3%ADa+ese+rol.");
+
+  const { error: updateError } = await database.from("profiles").update({ role: parsed.data.role }).eq("id", parsed.data.profileId).eq("role", profile.role);
+  if (updateError) redirect("/admin/users?error=No+pudimos+actualizar+el+rol+del+usuario.");
+
+  const { error: courierError } = parsed.data.role === "courier"
+    ? await database.from("couriers").update({ is_active: true }).eq("profile_id", parsed.data.profileId)
+    : await database.from("couriers").update({ is_active: false, is_online: false }).eq("profile_id", parsed.data.profileId);
+  if (courierError) redirect("/admin/users?error=El+rol+cambi%C3%B3%2C+pero+no+pudimos+actualizar+el+perfil+operativo+del+cadete.");
+
+  await database.from("audit_logs").insert({ actor_id: actorId, action: "profile.role_changed", entity_type: "profile", entity_id: profile.id, before_data: { role: profile.role }, after_data: { role: parsed.data.role } });
+  revalidatePath("/admin");
+  revalidatePath("/admin/users");
+  redirect(`/admin/users?notice=${encodeURIComponent(parsed.data.role === "courier" ? "Usuario promovido a cadete." : "Usuario asignado como cliente.")}`);
 }

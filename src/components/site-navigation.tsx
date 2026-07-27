@@ -13,7 +13,7 @@ const publicLinks = [{ href: "/servicios", label: "Servicios" }, { href: "/preci
 const roleLinks: Record<UserRole, Array<{ href: string; label: string }>> = {
   customer: [{ href: "/account", label: "Mi cuenta" }, { href: "/mis-pedidos", label: "Mis pedidos" }, { href: "/solicitar", label: "Nuevo pedido" }],
   courier: [{ href: "/courier/profile", label: "Mi perfil" }, { href: "/courier", label: "Panel" }, { href: "/courier/orders", label: "Mis pedidos" }],
-  admin: [{ href: "/admin/profile", label: "Mi perfil" }, { href: "/admin", label: "Administracion" }],
+  admin: [{ href: "/admin/profile", label: "Mi perfil" }, { href: "/admin", label: "Administracion" }, { href: "/admin/users", label: "Usuarios" }],
 };
 
 export function SiteNavigation({ profile }: { profile: SessionProfile }) {
