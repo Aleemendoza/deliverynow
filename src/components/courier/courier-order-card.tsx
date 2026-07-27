@@ -27,7 +27,7 @@ export function CourierOrderCard({ order, showHistory = false }: { order: Courie
     <div className="mt-5 grid gap-3 md:grid-cols-2">
       {stops.map((stop, index) => <section className="rounded-xl bg-zinc-800/80 p-4" key={stop.type}>
         <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-zinc-400"><MapPin className={index === 0 ? "size-4 text-brand" : "size-4 text-emerald-400"}/>{index === 0 ? "Retiro" : "Entrega"}</p>
-        <p className="mt-2 font-semibold">{stop.addresses?.formatted_address ?? "Dirección no disponible"}</p>
+        <p className="mt-2 break-words font-semibold">{stop.addresses?.formatted_address ?? "Dirección no disponible"}</p>
         {(stop.addresses?.floor || stop.addresses?.apartment || stop.addresses?.reference || stop.instructions) && <p className="mt-1 text-sm text-zinc-400">{[stop.addresses?.floor && `Piso ${stop.addresses.floor}`, stop.addresses?.apartment && `Dto. ${stop.addresses.apartment}`, stop.addresses?.reference, stop.instructions].filter(Boolean).join(" · ")}</p>}
         <div className="mt-3 flex items-center justify-between gap-2 text-sm"><span>{stop.contact_name}</span><a className="inline-flex items-center gap-1 text-brand" href={`tel:${stop.contact_phone_e164}`}><Phone className="size-3.5"/>Llamar</a></div>
         {(stop.arrived_at || stop.completed_at) && <p className="mt-2 text-xs text-zinc-500">{stop.completed_at ? `Completado ${dateTime(stop.completed_at)}` : `Llegada ${dateTime(stop.arrived_at)}`}</p>}
