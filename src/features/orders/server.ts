@@ -15,7 +15,8 @@ function orderCreationError(error: DatabaseError | null) {
   if (!error) return new Error("No se pudo registrar el pedido. Referencia: ORDER_RPC_EMPTY");
   if (error.message === "SERVICE_UNAVAILABLE") return new Error("El servicio seleccionado no esta disponible");
   if (error.code === "42501") return new Error("El servidor no tiene permiso para crear pedidos. Aplica la migracion de permisos e intenta nuevamente. Referencia: 42501");
-  if (error.code === "42883" || error.code === "PGRST202") return new Error("Falta actualizar la funcion de creacion de pedidos en la base de datos. Referencia: ORDER_RPC_MISSING");
+  if (error.code === "PGRST202") return new Error("Falta actualizar la funcion de creacion de pedidos en la base de datos. Referencia: ORDER_RPC_MISSING");
+  if (error.code === "42883") return new Error("La funcion de pedidos tiene una dependencia de base de datos sin configurar. Referencia: ORDER_RPC_DEPENDENCY");
   if (error.code === "23503") return new Error("El servicio seleccionado ya no esta disponible. Elegi otro servicio e intenta nuevamente. Referencia: 23503");
   return new Error(`No se pudo registrar el pedido. Referencia: ${error.code ?? "ORDER_RPC_UNKNOWN"}`);
 }
