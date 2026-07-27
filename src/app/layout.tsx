@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   title: "Delivery Now | Villa Constitución",
   description: "Envíos, compras y mandados locales con seguimiento.",
   manifest: "/manifest.json",
+  themeColor: "#facc15",
+  icons: {
+    icon: "/delivery-now-icon-192.png",
+    apple: "/delivery-now-icon-192.png",
+  },
 };
 
 export default function RootLayout({
