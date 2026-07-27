@@ -41,6 +41,7 @@ export async function createOrder(draft: OrderDraft, customerId: string) {
     priceSnapshot: estimate.price,
   };
   const { data, error } = await supabase.rpc("create_guest_order", { payload });
+  if (error) console.error("No se pudo crear el pedido mediante create_guest_order.", { code: error.code, details: error.details, hint: error.hint, message: error.message });
   if (error || !data) throw new Error(error?.message === "SERVICE_UNAVAILABLE" ? "El servicio seleccionado no está disponible" : "No se pudo registrar el pedido");
   const result = data as { id?: string; trackingCode: string; status: string; pin?: string; duplicate: boolean };
   if (!result.duplicate && result.id) {
