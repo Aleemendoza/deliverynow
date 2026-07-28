@@ -1,5 +1,7 @@
 # Dominio: operación de cadetes
 
+> La migración `202607280004_fix_notification_event_identifier.sql` corrige una ambigüedad entre la variable local y la columna `notification_outbox.event_id` en la emisión de notificaciones. Sin ella, el evento `order.assigned` revierte de forma atómica el reclamo de un pedido.
+
 ## Componentes y rutas
 
 - Panel: `src/app/courier/page.tsx`; requiere rol `courier`.

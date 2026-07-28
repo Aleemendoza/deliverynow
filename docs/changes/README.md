@@ -6,6 +6,8 @@ Una entrada debe separar hechos verificados de pendientes, incluir los archivos 
 
 ## Entradas
 
+- [2026-07-28 - Correccion de emision de notificaciones al asignar](2026-07-28-notification-event-identifier.md)
+
 - [2026-07-28 — Reclamo confiable de pedidos en cola](2026-07-28-reliable-courier-queue-claim.md)
 
 - [2026-07-28 — Estado operativo verificable de cadetes](2026-07-28-courier-operational-state-consistency.md)
