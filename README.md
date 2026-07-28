@@ -29,3 +29,7 @@ Para producción, verificá que la instancia de Supabase tenga aplicada la migra
 - `npm run build`: build de producción.
 
 Consultá [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE.md](DATABASE.md), [SECURITY.md](SECURITY.md), [DEPLOYMENT.md](DEPLOYMENT.md) y [TESTING.md](TESTING.md) antes de desplegar.
+
+Para desarrollar o mantener la aplicación, empezá por el [árbol de conocimiento](docs/knowledge/README.md) y el [registro de cambios](docs/changes/README.md). Son documentos vivos: cada modificación debe actualizar ambos cuando corresponda.
+
+Para desarrollar o mantener la aplicación, empezá por el [árbol de conocimiento](docs/knowledge/README.md) y el [registro de cambios](docs/changes/README.md). Son documentos vivos: cada modificación debe actualizar ambos cuando corresponda.
