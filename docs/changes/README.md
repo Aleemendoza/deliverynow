@@ -6,10 +6,10 @@ Una entrada debe separar hechos verificados de pendientes, incluir los archivos 
 
 ## Entradas
 
+- [2026-07-28 — Vinculación idempotente de pedidos a la cuenta](2026-07-28-idempotent-order-customer-link.md)
+- [2026-07-28 — Experiencia profesional de acceso y registro](2026-07-28-auth-form-experience.md)
 - [2026-07-28 — Cola autogestionada de cadetes](2026-07-28-self-service-courier-queue.md)
 - [2026-07-28 — Gobierno de conocimiento y subagentes](2026-07-28-knowledge-governance.md)
-
-- [2026-07-28 — Experiencia profesional de acceso y registro](2026-07-28-auth-form-experience.md)
 
 ## Plantilla
 

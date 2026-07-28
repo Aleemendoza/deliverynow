@@ -63,10 +63,26 @@ export async function createOrder(draft: OrderDraft, customerId: string, custome
   if (error || !data) throw orderCreationError(error);
 
   const result = data as { id?: string; trackingCode: string; status: string; pin?: string; duplicate: boolean };
-  if (!result.duplicate && result.id) {
-    const { error: customerError } = await supabase.rpc("link_customer_order_and_emit_created", { order_id_value: result.id, customer_id_value: customerId, actor_id_value: customerProfileId });
-    logOrderDebug("order.customer_link.responded", { requestId, databaseCode: customerError?.code });
-    if (customerError) throw new Error("No se pudo vincular el pedido a tu cuenta");
+  // `create_guest_order` is intentionally idempotent and does not return its
+  // id on a replay. Resolve it in both cases so a transient notification/RPC
+  // failure can never leave the customer unable to see their own order.
+  const orderId = result.id ?? (await supabase.from("orders").select("id").eq("idempotency_key", draft.idempotencyKey).maybeSingle<{ id: string }>()).data?.id;
+  if (!orderId) throw new Error("No pudimos recuperar el pedido creado.");
+
+  const { data: linkedOrder, error: linkError } = await supabase.from("orders")
+    .update({ customer_id: customerId, updated_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .is("customer_id", null)
+    .select("id")
+    .maybeSingle<{ id: string }>();
+  if (linkError) throw new Error("No se pudo vincular el pedido a tu cuenta.");
+
+  if (linkedOrder) {
+    const { error: notificationError } = await supabase.rpc("emit_order_notification_event", { event_type_value: "order.created", order_id_value: orderId, actor_id_value: customerProfileId });
+    logOrderDebug("order.customer_link.responded", { requestId, databaseCode: notificationError?.code });
+    // The order is already safely linked. Notification delivery is retried by
+    // the outbox and must not turn a successful first submission into an error.
+    if (notificationError) console.error("No se pudo emitir la notificación inicial del pedido.", { requestId, code: notificationError.code, message: notificationError.message });
   }
   logOrderDebug("order.creation.completed", { requestId, duplicate: result.duplicate });
   return { ...result, estimate };

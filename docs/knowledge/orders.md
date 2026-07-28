@@ -8,6 +8,11 @@
 4. El seguimiento público está en `/seguimiento` y `api/tracking/[trackingCode]`; existen rutas de sesión de seguimiento. Cualquier cambio debe mantener privacidad, limitación de abuso y coherencia de estados.
 5. El cadete actualiza estados mediante `api/orders/[id]/status`; la máquina de estados reside en `src/lib/orders/status.ts` y en RPC SQL. Ambas deben permanecer alineadas.
 
+## Creación idempotente y vinculación de cliente
+
+- `createOrder` invoca la RPC idempotente `create_guest_order`. Si la repetición no devuelve el ID, resuelve el pedido por `idempotency_key` antes de continuar.
+- La vinculación a la cuenta se ejecuta sólo cuando `customer_id` todavía es `NULL`, para no sobrescribir una vinculación existente. La emisión de `order.created` se realiza sólo tras esa vinculación; su fallo queda registrado y no revierte un pedido ya creado ni vinculado, porque la entrega la reintenta la outbox.
+
 ## Contratos que no deben divergir
 
 - El estado de un pedido afecta tracking, bandeja de cadete, admin, notificaciones, historial y métricas.
