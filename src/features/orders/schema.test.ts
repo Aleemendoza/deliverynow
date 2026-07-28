@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { deliveryStepSchema, orderDraftSchema, personNameSchema, phoneSchema, serviceStepSchema } from "./schema";
 
 const address = { formattedAddress: "San Martín 123, Villa Constitución", placeId: "place-123", latitude: -33.227, longitude: -60.329, city: "Villa Constitución", province: "Santa Fe", mapConfirmed: true };
-const validOrder = { serviceType: "document", product: { fragile: false, requiresPurchaseFunds: false, requiresReceipt: false }, pickup: address, delivery: address, senderName: "Ana Pérez", senderEmail: "ANA@EXAMPLE.COM", senderPhone: "+54 9 336 412-3456", recipientName: "Luis Gómez", recipientPhone: "+54 9 336 412-3456", deliverySchedule: "immediate", paymentResponsible: "sender", paymentMethod: "cash", urgent: false, termsAccepted: true, idempotencyKey: "d0bca319-1d0d-4422-a469-0f6684087777" };
+const validOrder = { serviceType: "document", product: { fragile: false, requiresPurchaseFunds: false, requiresReceipt: false }, pickup: address, delivery: address, senderName: "Ana Pérez", senderPhone: "+54 9 336 412-3456", recipientName: "Luis Gómez", recipientPhone: "+54 9 336 412-3456", deliverySchedule: "immediate", paymentResponsible: "sender", paymentMethod: "cash", urgent: false, termsAccepted: true, idempotencyKey: "d0bca319-1d0d-4422-a469-0f6684087777" };
 
 describe("order validation", () => {
   it("normalizes names and validates Argentine numbers", () => { expect(personNameSchema.parse("  Ana   Pérez ")).toBe("Ana Pérez"); expect(phoneSchema.safeParse("+54 9 336 412-3456").success).toBe(true); });

@@ -10,6 +10,9 @@
 
 ## Notificaciones durante el pedido
 
+- El formulario no solicita correo de confirmación ni persiste un email del pedido; el seguimiento queda asociado a la cuenta autenticada y al código de seguimiento.
+- La finalización la realiza el cadete asignado desde el estado `at_delivery`, sin PIN. Se preservan autorización, historial de estados y auditoría de la transición.
+
 - Las notificaciones push son opcionales: el cliente puede activarlas para recibir cambios de estado, pero una demora, bloqueo de permiso o falla de suscripción no impide crear ni seguir un pedido.
 - La entrega de eventos permanece asíncrona mediante la outbox; el flujo de creación no debe depender de la disponibilidad del navegador ni del proveedor push.
 

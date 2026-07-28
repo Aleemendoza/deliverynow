@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     return apiError("UNAUTHORIZED", "Inicia sesion para solicitar un envio.", 401);
   }
 
-  const { data: profile } = await sessionClient.from("profiles").select("role,full_name,email").eq("id", user.id).maybeSingle<{ role: ProfileRole; full_name: string | null; email: string | null }>();
+  const { data: profile } = await sessionClient.from("profiles").select("role,full_name").eq("id", user.id).maybeSingle<{ role: ProfileRole; full_name: string | null }>();
   if (profile?.role !== "customer") {
     logOrderDebug("order.request.rejected", { requestId, reason: "invalid_role" });
     return apiError("FORBIDDEN", "Los pedidos deben solicitarse desde una cuenta de cliente.", 403);
@@ -49,10 +49,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const accountOrder = { ...parsed.data, senderName: profile.full_name.trim(), senderEmail: profile.email ?? user.email ?? parsed.data.senderEmail };
+    const accountOrder = { ...parsed.data, senderName: profile.full_name.trim() };
     const order = await createOrder(accountOrder, customer.id, user.id, requestId);
-    // External delivery is asynchronous through the outbox. The response must
-    // never disclose the PIN, addresses, contacts, or delivery outcome.
+    // Notifications are asynchronous through the outbox. The response never
+    // discloses addresses, contacts, or delivery outcome.
     logOrderDebug("order.request.completed", { requestId, status: order.duplicate ? 200 : 201, duplicate: order.duplicate });
     return NextResponse.json({ trackingCode: order.trackingCode, status: order.status, duplicate: order.duplicate }, { status: order.duplicate ? 200 : 201 });
   } catch (error) {

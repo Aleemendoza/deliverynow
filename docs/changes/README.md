@@ -6,6 +6,8 @@ Una entrada debe separar hechos verificados de pendientes, incluir los archivos 
 
 ## Entradas
 
+- [2026-07-28 - Flujo operativo sin PIN ni correo obligatorio](2026-07-28-pinless-email-free-order-flow.md)
+
 - [2026-07-28 - Visibilidad confiable de trabajo asignado al cadete](2026-07-28-courier-assigned-work-visibility.md)
 
 - [2026-07-28 - Correccion de emision de notificaciones al asignar](2026-07-28-notification-event-identifier.md)

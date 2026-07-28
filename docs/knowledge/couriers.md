@@ -20,6 +20,8 @@
 
 ## Invariantes
 
+- El cadete asignado puede finalizar desde `at_delivery` sin PIN; el cambio conserva actor, historial y marca temporal de finalización.
+
 - Sólo un cadete activo, online y con lease vigente puede ver o tomar trabajo operativo.
 - Un cadete no puede tener más de un pedido activo.
 - Sólo el cadete asignado puede avanzar el estado de su pedido; toda transición debe registrar historial y actor.

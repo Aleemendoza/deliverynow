@@ -59,7 +59,7 @@ export async function createOrder(draft: OrderDraft, customerId: string, custome
   if (error) console.error("No se pudo crear el pedido mediante create_guest_order.", { code: error.code, details: error.details, hint: error.hint, message: error.message });
   if (error || !data) throw orderCreationError(error);
 
-  const result = data as { id?: string; trackingCode: string; status: string; pin?: string; duplicate: boolean };
+  const result = data as { id?: string; trackingCode: string; status: string; duplicate: boolean };
   // `create_guest_order` is intentionally idempotent and does not return its
   // id on a replay. Resolve it in both cases so a transient notification/RPC
   // failure can never leave the customer unable to see their own order.
