@@ -7,6 +7,12 @@
 - Disponibilidad/presencia: rutas `api/courier/availability`, `heartbeat` y `presence`, con componentes de toggle y lease.
 - Ofertas: `api/courier/offers` y aceptación en `api/courier/offers/[attemptId]/accept`.
 
+## Experiencia operativa del panel
+
+- La cola de pedidos, las tareas en curso y el historial viven en `/courier`; `/courier/orders` conserva compatibilidad mediante redirección al panel.
+- El panel considera disponible a un cadete sólo si `is_online` y su lease no expiró. Al activar disponibilidad, la cola se consulta automáticamente; cuando la API o el intento de toma informa `COURIER_OFFLINE`, se bloquea la cola y se pide reactivar disponibilidad y ubicación.
+- `couriers.transport_type` es la fuente de verdad de movilidad. El cadete puede elegir `bici` o `moto` desde `/courier/profile`; perfil y panel obtienen el mismo registro operativo autorizado.
+
 ## Invariantes
 
 - Sólo un cadete activo, online y con lease vigente puede ver o tomar trabajo operativo.

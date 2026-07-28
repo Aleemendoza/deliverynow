@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authenticatedFetch } from "@/lib/auth/authenticated-fetch";
+import { useCourierAvailability } from "@/components/courier/courier-availability-context";
 
-export function CourierAvailabilityToggle({ initialOnline }: { initialOnline: boolean }) {
+export function CourierAvailabilityToggle() {
   const router = useRouter();
-  const [online, setOnline] = useState(initialOnline);
+  const { online, setOnline } = useCourierAvailability();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
