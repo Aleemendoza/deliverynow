@@ -13,7 +13,7 @@ Entidades de dominio documentadas: perfiles/roles, clientes, cadetes, zonas, ser
 | Google Maps/Places | `src/lib/google/maps-loader.ts` | clave pública restringida por referrer. |
 | Google Routes | `src/lib/google/routes.ts` | sólo servidor, clave separada y restringida. |
 | Resend | `src/lib/notifications/email.ts` | requiere remitente y clave de servidor. |
-| Web Push | `src/lib/notifications/push.ts` | VAPID privada sólo en servidor; consentimiento explícito. |
+| Web Push | `src/lib/notifications/push.ts` | VAPID privada sólo en servidor; consentimiento explícito. Es un canal opcional y no bloquea la creación de pedidos. |
 | Supabase Realtime | `src/lib/realtime/subscription.ts` | complemento de recarga, no fuente única al recuperar foco. |
 
 Las credenciales, buckets y proveedores habilitados en cada entorno son **pendientes de verificar** fuera del repositorio. Consultar `README.md` y `DEPLOYMENT.md` antes de despliegue.

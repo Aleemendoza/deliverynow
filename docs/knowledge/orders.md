@@ -8,6 +8,11 @@
 4. El seguimiento público está en `/seguimiento` y `api/tracking/[trackingCode]`; existen rutas de sesión de seguimiento. Cualquier cambio debe mantener privacidad, limitación de abuso y coherencia de estados.
 5. El cadete actualiza estados mediante `api/orders/[id]/status`; la máquina de estados reside en `src/lib/orders/status.ts` y en RPC SQL. Ambas deben permanecer alineadas.
 
+## Notificaciones durante el pedido
+
+- Las notificaciones push son opcionales: el cliente puede activarlas para recibir cambios de estado, pero una demora, bloqueo de permiso o falla de suscripción no impide crear ni seguir un pedido.
+- La entrega de eventos permanece asíncrona mediante la outbox; el flujo de creación no debe depender de la disponibilidad del navegador ni del proveedor push.
+
 ## Creación idempotente y vinculación de cliente
 
 - `createOrder` invoca la RPC idempotente `create_guest_order`. Si la repetición no devuelve el ID, resuelve el pedido por `idempotency_key` antes de continuar.

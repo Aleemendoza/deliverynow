@@ -13,11 +13,11 @@ function base64UrlToUint8Array(value: string) {
   return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
 }
 
-function withTimeout<T>(promise: Promise<T>, message: string, milliseconds = 12_000) {
-  return Promise.race<T>([
-    promise,
-    new Promise<T>((_, reject) => window.setTimeout(() => reject(new Error(message)), milliseconds)),
-  ]);
+function withTimeout<T>(promise: Promise<T>, message: string, milliseconds = 20_000) {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error(message)), milliseconds);
+    promise.then((value) => { window.clearTimeout(timer); resolve(value); }, (error: unknown) => { window.clearTimeout(timer); reject(error); });
+  });
 }
 
 function supportError() {

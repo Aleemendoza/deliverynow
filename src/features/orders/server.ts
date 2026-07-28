@@ -42,9 +42,6 @@ function scheduledAt(draft: OrderDraft) {
 
 export async function createOrder(draft: OrderDraft, customerId: string, customerProfileId: string, requestId?: string) {
   const supabase = getSupabaseServerClient();
-  const { count: subscriptionCount, error: subscriptionError } = await supabase.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("profile_id", customerProfileId);
-  if (subscriptionError) throw new Error("No pudimos comprobar tus notificaciones. Intentá nuevamente.");
-  if ((subscriptionCount ?? 0) === 0) throw new Error("Activá las notificaciones para poder confirmar un pedido.");
   logOrderDebug("order.creation.started", { requestId, serviceType: draft.serviceType, deliverySchedule: draft.deliverySchedule, urgent: draft.urgent });
   const estimate = await estimateOrder(draft, requestId);
   const payload = {
