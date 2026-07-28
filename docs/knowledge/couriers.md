@@ -23,6 +23,6 @@
 
 ## Cola autogestionada
 
-La migración versionada `202607280001_self_service_courier_queue.sql` y sus cambios de UI/API sustituyen ofertas exclusivas temporales por una cola visible a cadetes disponibles. El primero que reclama el pedido queda asignado mediante la RPC `claim_available_order`.
+Las migraciones versionadas `202607280001_self_service_courier_queue.sql` y `202607280003_remove_legacy_offer_close_trigger.sql`, junto con sus cambios de UI/API, sustituyen ofertas exclusivas temporales por una cola visible a cadetes disponibles. El primero que reclama el pedido queda asignado mediante la RPC `claim_available_order`; ningún trigger heredado de rondas de ofertas debe ejecutarse durante ese reclamo.
 
 El control de concurrencia, disponibilidad y pedido activo reside en la RPC. La migración debe aplicarse y validarse en cada entorno antes de habilitar el flujo operativo. Al trabajar en este dominio, revisar también las migraciones `202607270004` a `202607270006`, la ruta de aceptación y el panel de pedidos.
