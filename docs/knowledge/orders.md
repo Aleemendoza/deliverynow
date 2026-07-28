@@ -13,6 +13,11 @@
 - Las notificaciones push son opcionales: el cliente puede activarlas para recibir cambios de estado, pero una demora, bloqueo de permiso o falla de suscripción no impide crear ni seguir un pedido.
 - La entrega de eventos permanece asíncrona mediante la outbox; el flujo de creación no debe depender de la disponibilidad del navegador ni del proveedor push.
 
+## Selección de servicio
+
+- `document` es el servicio inicial del formulario. Cuando el cliente elige otro servicio, `order-wizard` reinicia el bloque `product` y sus errores antes de validar el nuevo tipo.
+- Los requisitos específicos (`size` y `weightKg` para paquete, descripción y fondos de compra cuando correspondan) sólo aplican al servicio actualmente seleccionado; valores inválidos de un tipo anterior no deben bloquear otro.
+
 ## Creación idempotente y vinculación de cliente
 
 - `createOrder` invoca la RPC idempotente `create_guest_order`. Si la repetición no devuelve el ID, resuelve el pedido por `idempotency_key` antes de continuar.
