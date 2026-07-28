@@ -9,6 +9,8 @@ Una entrada debe separar hechos verificados de pendientes, incluir los archivos 
 - [2026-07-28 — Cola autogestionada de cadetes](2026-07-28-self-service-courier-queue.md)
 - [2026-07-28 — Gobierno de conocimiento y subagentes](2026-07-28-knowledge-governance.md)
 
+- [2026-07-28 — Experiencia profesional de acceso y registro](2026-07-28-auth-form-experience.md)
+
 ## Plantilla
 
 Usar [TEMPLATE.md](TEMPLATE.md) para toda entrada nueva.

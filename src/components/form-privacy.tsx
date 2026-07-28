@@ -4,11 +4,13 @@ import { useEffect } from "react";
 
 function disableAutofill(root: ParentNode) {
   if (root instanceof HTMLElement) {
-    if (root.matches("form")) root.setAttribute("autocomplete", "off");
-    if (root.matches("input:not([type=hidden]), textarea, select")) root.setAttribute("autocomplete", "off");
+    if (root.matches("form:not([data-allow-autocomplete])")) root.setAttribute("autocomplete", "off");
+    if (root.matches("input:not([type=hidden]), textarea, select") && !root.closest("[data-allow-autocomplete]")) root.setAttribute("autocomplete", "off");
   }
-  root.querySelectorAll("form").forEach((form) => form.setAttribute("autocomplete", "off"));
-  root.querySelectorAll("input:not([type=hidden]), textarea, select").forEach((field) => field.setAttribute("autocomplete", "off"));
+  root.querySelectorAll("form:not([data-allow-autocomplete])").forEach((form) => form.setAttribute("autocomplete", "off"));
+  root.querySelectorAll("input:not([type=hidden]), textarea, select").forEach((field) => {
+    if (!field.closest("[data-allow-autocomplete]")) field.setAttribute("autocomplete", "off");
+  });
 }
 
 export function FormPrivacy() {
