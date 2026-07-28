@@ -11,7 +11,8 @@
 
 - La cola de pedidos, las tareas en curso y el historial viven en `/courier`; `/courier/orders` conserva compatibilidad mediante redirección al panel.
 - El panel considera disponible a un cadete sólo si `is_online` y su lease no expiró. Al activar disponibilidad, la cola se consulta automáticamente; cuando la API o el intento de toma informa `COURIER_OFFLINE`, se bloquea la cola y se pide reactivar disponibilidad y ubicación.
-- `couriers.transport_type` es la fuente de verdad de movilidad. El cadete puede elegir `bici` o `moto` desde `/courier/profile`; perfil y panel obtienen el mismo registro operativo autorizado.
+- `couriers.transport_type` es la fuente de verdad de movilidad. El cadete puede elegir `bici` o `moto` desde `/courier/profile`; perfil, panel y respuesta de guardado leen el mismo registro operativo autorizado y confirman el valor persistido.
+- La disponibilidad visible no se deriva de la respuesta nominal de una RPC: sólo se confirma cuando el registro operativo persiste `is_online`, `is_active` y `availability_expires_at` vigente. La migración `202607280002_confirm_courier_availability_state.sql` reafirma este contrato para entornos que conservaran una versión anterior de la RPC.
 
 ## Invariantes
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { apiError } from "@/lib/http";
+import { getCourierOperationalProfile } from "@/lib/couriers/operational-profile";
 import { createSupabaseServerClient, getSupabaseServerClient } from "@/lib/supabase/server";
 
 const transportSchema = z.object({ transportType: z.enum(["bici", "moto"]) });
@@ -16,5 +17,8 @@ export async function POST(request: NextRequest) {
   if (profile?.role !== "courier") return apiError("FORBIDDEN", "Tu cuenta no está habilitada como cadete.", 403);
   const { error } = await database.from("couriers").upsert({ profile_id: user.id, transport_type: parsed.data.transportType }, { onConflict: "profile_id" });
   if (error) return apiError("TRANSPORT_UPDATE_FAILED", "No pudimos actualizar tu movilidad. Intentá nuevamente.", 503);
-  return NextResponse.json({ transportType: parsed.data.transportType });
+  const { data: persistedCourier, error: persistedCourierError } = await getCourierOperationalProfile(user.id);
+  if (persistedCourierError || !persistedCourier) return apiError("TRANSPORT_STATE_UNAVAILABLE", "No pudimos confirmar tu movilidad. Intentá nuevamente.", 503);
+  if (persistedCourier.transport_type !== parsed.data.transportType) return apiError("TRANSPORT_STATE_UNCONFIRMED", "La movilidad no quedó confirmada. Intentá nuevamente.", 409);
+  return NextResponse.json({ transportType: persistedCourier.transport_type });
 }

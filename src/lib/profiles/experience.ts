@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getCourierOperationalProfile } from "@/lib/couriers/operational-profile";
 import type { UserRole } from "@/types/domain";
 
 type OrderRow = { tracking_code: string; status: string; created_at: string; final_price: number | null; estimated_price: number | null };
@@ -25,7 +26,7 @@ export async function getProfileExperience(role: UserRole, profileId: string): P
     if (customer) { const { data } = await database.from("orders").select("tracking_code,status,created_at,final_price,estimated_price").eq("customer_id", customer.id).order("created_at", { ascending: false }); rows = data ?? []; }
     highlightLabel = "Beneficio actual"; highlightValue = "Seguimiento prioritario";
   } else if (role === "courier") {
-    const { data: courier } = await database.from("couriers").select("id,transport_type").eq("profile_id", profileId).maybeSingle<{ id: string; transport_type: string }>();
+    const { data: courier } = await getCourierOperationalProfile(profileId);
     if (courier) { const { data } = await database.from("orders").select("tracking_code,status,created_at,final_price,estimated_price").eq("assigned_courier_id", courier.id).order("created_at", { ascending: false }); rows = data ?? []; highlightValue = courier.transport_type; }
     highlightLabel = "Movilidad"; highlightValue ||= "Sin configurar";
   } else {

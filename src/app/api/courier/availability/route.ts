@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { apiError } from "@/lib/http";
+import { getCourierOperationalProfile, isCourierAvailable } from "@/lib/couriers/operational-profile";
 import { createSupabaseServerClient, getSupabaseServerClient } from "@/lib/supabase/server";
 
 const schema = z.object({ isOnline: z.boolean() });
@@ -30,5 +31,12 @@ export async function POST(request: NextRequest) {
     const setupError = error?.message === "COURIER_NOT_AVAILABLE" || error?.message === "COURIER_PROFILE_MISSING";
     return apiError("AVAILABILITY_CHANGE_FAILED", setupError ? "Tu perfil de cadete todavía no está activo. Contactá a administración." : "No fue posible actualizar tu disponibilidad.", setupError ? 409 : 403);
   }
-  return NextResponse.json({ isOnline: data });
+  const { data: persistedCourier, error: persistedCourierError } = await getCourierOperationalProfile(user.id);
+  if (persistedCourierError) return apiError("AVAILABILITY_STATE_UNAVAILABLE", "No pudimos confirmar tu disponibilidad. Intentá nuevamente.", 503);
+
+  const isOnline = isCourierAvailable(persistedCourier);
+  if (isOnline !== parsed.data.isOnline) {
+    return apiError("AVAILABILITY_STATE_UNCONFIRMED", "La disponibilidad no quedó confirmada. Actualizá la configuración operativa antes de recibir pedidos.", 409);
+  }
+  return NextResponse.json({ isOnline, expiresAt: persistedCourier?.availability_expires_at });
 }
