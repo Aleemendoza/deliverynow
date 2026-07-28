@@ -5,8 +5,8 @@ import { apiError } from "@/lib/http";
 
 const markReadSchema = z.object({ id: z.string().uuid() });
 
-export async function GET() {
-  const supabase = await createSupabaseServerClient();
+export async function GET(request: Request) {
+  const supabase = await createSupabaseServerClient(request);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return apiError("UNAUTHORIZED", "Iniciá sesión para ver notificaciones.", 401);
   const { data, error } = await supabase.from("notifications").select("id,title,body,type,created_at,read_at,order_id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30);
@@ -19,7 +19,7 @@ export async function PATCH(request: Request) {
   const parsed = markReadSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("VALIDATION_ERROR", "La notificacion no es valida.", 422);
 
-  const sessionClient = await createSupabaseServerClient();
+  const sessionClient = await createSupabaseServerClient(request);
   const { data: { user } } = await sessionClient.auth.getUser();
   if (!user) return apiError("UNAUTHORIZED", "Inicia sesion para gestionar notificaciones.", 401);
 

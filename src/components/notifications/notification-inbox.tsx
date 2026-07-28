@@ -4,6 +4,7 @@ import { Bell, Check, LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PushRegistration } from "@/components/notifications/push-registration";
+import { authenticatedFetch } from "@/lib/auth/authenticated-fetch";
 import { useRealtimeSubscription, realtimeEnabled } from "@/lib/realtime/subscription";
 import type { UserRole } from "@/types/domain";
 
@@ -25,7 +26,7 @@ export function NotificationInbox({ role, profileId }: { role: UserRole; profile
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch("/api/notifications", { cache: "no-store" });
+      const response = await authenticatedFetch("/api/notifications", { cache: "no-store" });
       if (!response.ok) return;
       const payload = await response.json() as NotificationResponse;
       setNotifications(payload.notifications);
@@ -45,7 +46,7 @@ export function NotificationInbox({ role, profileId }: { role: UserRole; profile
 
   const openNotification = async (notification: Notification) => {
     if (!notification.read_at) {
-      const response = await fetch("/api/notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: notification.id }) });
+      const response = await authenticatedFetch("/api/notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: notification.id }) });
       if (response.ok) {
         setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read_at: new Date().toISOString() } : item));
         setUnreadCount((current) => Math.max(0, current - 1));

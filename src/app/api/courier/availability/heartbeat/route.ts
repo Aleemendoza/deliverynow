@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { apiError } from "@/lib/http";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function POST() {
-  const supabase = await createSupabaseServerClient();
+export async function POST(request: NextRequest) {
+  const supabase = await createSupabaseServerClient(request);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return apiError("UNAUTHORIZED", "Iniciá sesión para renovar tu disponibilidad.", 401);
   const { data, error } = await supabase.rpc("renew_courier_availability");

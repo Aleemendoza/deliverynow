@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   const parsed = presenceSchema.safeParse(await request.json());
   if (!parsed.success) return apiError("VALIDATION_ERROR", "La ubicación del cadete no es válida.", 422);
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient(request);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return apiError("UNAUTHORIZED", "Iniciá sesión para actualizar tu ubicación.", 401);
 

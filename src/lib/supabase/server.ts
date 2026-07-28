@@ -25,10 +25,23 @@ export function getSupabaseServerClient() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-export async function createSupabaseServerClient() {
+export async function createSupabaseServerClient(request?: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error("Supabase no está configurado");
   const cookieStore = await cookies();
-  return createServerClient(url, key, { cookies: { getAll: () => cookieStore.getAll(), setAll: (entries) => { try { entries.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch { /* Route handlers may not mutate cookies. */ } } } });
+  const authorization = request?.headers.get("authorization");
+  return createServerClient(url, key, {
+    ...(authorization ? { global: { headers: { Authorization: authorization } } } : {}),
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (entries) => {
+        try {
+          entries.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        } catch {
+          // Server Components cannot persist refreshed cookies; Proxy handles them.
+        }
+      },
+    },
+  });
 }

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { authenticatedFetch } from "@/lib/auth/authenticated-fetch";
 
 export function CourierAvailabilityToggle({ initialOnline }: { initialOnline: boolean }) {
   const router = useRouter();
@@ -14,7 +15,7 @@ export function CourierAvailabilityToggle({ initialOnline }: { initialOnline: bo
     setBusy(true);
     setMessage("");
     try {
-      const response = await fetch("/api/courier/availability", {
+      const response = await authenticatedFetch("/api/courier/availability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isOnline: nextOnline }),

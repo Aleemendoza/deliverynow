@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { authenticatedFetch } from "@/lib/auth/authenticated-fetch";
 
 const AVAILABLE_UPDATE_INTERVAL_MS = 60_000;
 const ACTIVE_UPDATE_INTERVAL_MS = 15_000;
@@ -20,7 +21,7 @@ export function CourierPresence({ online, hasActiveOrder = false }: { online: bo
       const longitudeDelta = previous ? (position.coords.longitude - previous.longitude) * 111_000 * Math.cos(position.coords.latitude * Math.PI / 180) : Infinity;
       if (Math.hypot(latitudeDelta, longitudeDelta) < MIN_MOVEMENT_METERS && Date.now() - lastSentAt.current < interval) return;
       lastSentAt.current = Date.now(); lastPosition.current = position.coords;
-      void fetch("/api/courier/presence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracyMeters: position.coords.accuracy }) }).then((response) => setMessage(response.ok ? "Ubicación activa para ordenar ofertas cercanas." : "No pudimos actualizar tu ubicación.")).catch(() => setMessage("No pudimos actualizar tu ubicación."));
+      void authenticatedFetch("/api/courier/presence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracyMeters: position.coords.accuracy }) }).then((response) => setMessage(response.ok ? "Ubicación activa para ordenar ofertas cercanas." : "No pudimos actualizar tu ubicación.")).catch(() => setMessage("No pudimos actualizar tu ubicación."));
     };
     const watchId = navigator.geolocation.watchPosition(send, () => setMessage("Permití la ubicación para ordenar ofertas cercanas."), { enableHighAccuracy: true, maximumAge: 30_000, timeout: 15_000 });
     return () => navigator.geolocation.clearWatch(watchId);

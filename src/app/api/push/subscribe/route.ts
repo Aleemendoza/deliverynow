@@ -5,8 +5,8 @@ import { apiError } from "@/lib/http";
 
 const schema = z.object({ endpoint: z.string().url().max(2048), keys: z.object({ p256dh: z.string().min(16), auth: z.string().min(8) }) });
 
-export async function GET() {
-  const sessionClient = await createSupabaseServerClient();
+export async function GET(request: NextRequest) {
+  const sessionClient = await createSupabaseServerClient(request);
   const { data: { user } } = await sessionClient.auth.getUser();
   if (!user) return apiError("UNAUTHORIZED", "Iniciá sesión para consultar las notificaciones.", 401);
   const database = getSupabaseServerClient();
@@ -18,7 +18,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(await request.json());
   if (!parsed.success) return apiError("VALIDATION_ERROR", "La suscripción push no es válida.", 422);
-  const sessionClient = await createSupabaseServerClient();
+  const sessionClient = await createSupabaseServerClient(request);
   const { data: { user } } = await sessionClient.auth.getUser();
   if (!user) return apiError("UNAUTHORIZED", "Iniciá sesión para activar notificaciones.", 401);
   const adminClient = getSupabaseServerClient();

@@ -5,6 +5,7 @@ import { LogIn, LogOut, Menu, PackagePlus, PanelTop, X, Zap } from "lucide-react
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { NotificationInbox } from "@/components/notifications/notification-inbox";
+import { SessionSync } from "@/components/auth/session-sync";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/types/domain";
 
@@ -34,7 +35,7 @@ export function SiteNavigation({ profile }: { profile: SessionProfile }) {
     }
   }
 
-  return <header className="sticky top-0 z-20 border-b border-white/10 bg-background/95 backdrop-blur"><nav className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-x-4 px-4 py-3">
+  return <header className="sticky top-0 z-20 border-b border-white/10 bg-background/95 backdrop-blur">{profile && <SessionSync/>}<nav className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-x-4 px-4 py-3">
     <Link href="/" className="flex items-center gap-2 text-lg font-black tracking-tight"><span className="grid size-8 place-items-center rounded-lg bg-brand text-brand-foreground"><PanelTop size={18} /></span><span>Delivery <em className="not-italic text-brand">Now</em></span></Link>
     <div className="hidden items-center gap-6 text-sm text-zinc-300 md:flex">{links.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}</div>
     <div className="hidden items-center gap-2 md:flex">{profile ? <><span className="max-w-36 truncate px-2 text-sm text-zinc-300">{profile.fullName || (profile.role === "courier" ? "Cadete" : profile.role === "admin" ? "Administrador" : "Mi cuenta")}</span><NotificationInbox role={profile.role} profileId={profile.id}/>{primaryLink && <Link href={primaryLink.href} className="rounded-lg bg-brand px-3 py-2 text-sm font-bold text-brand-foreground"><Zap className="mr-1 inline size-4"/>{primaryLink.label}</Link>}<button onClick={signOut} disabled={signingOut} className="rounded-lg border border-white/15 px-3 py-2 text-sm disabled:opacity-50"><LogOut className="mr-1 inline size-4"/>{signingOut ? "Saliendo..." : "Salir"}</button></> : <><Link href="/auth/login" className="rounded-lg px-3 py-2 text-sm"><LogIn className="mr-1 inline size-4" />Ingresar</Link><Link href="/solicitar" className="rounded-lg bg-brand px-3 py-2 text-sm font-bold text-brand-foreground"><Zap className="mr-1 inline size-4"/>Pedir ahora</Link></>}</div>

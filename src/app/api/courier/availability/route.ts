@@ -8,7 +8,7 @@ const schema = z.object({ isOnline: z.boolean() });
 export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(await request.json());
   if (!parsed.success) return apiError("VALIDATION_ERROR", "La disponibilidad no es válida.", 422);
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient(request);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return apiError("UNAUTHORIZED", "Iniciá sesión para actualizar tu disponibilidad.", 401);
 

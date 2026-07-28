@@ -9,7 +9,7 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/ord
   const { id } = await context.params;
   const parsed = schema.safeParse(await request.json());
   if (!parsed.success) return apiError("VALIDATION_ERROR", "El cambio de estado no es válido.", 422);
-  const sessionClient = await createSupabaseServerClient();
+  const sessionClient = await createSupabaseServerClient(request);
   const { data: { user } } = await sessionClient.auth.getUser();
   if (!user) return apiError("UNAUTHORIZED", "Iniciá sesión para actualizar el pedido.", 401);
   const { data, error } = await sessionClient.rpc("transition_order_status", { order_id: id, target_status: parsed.data.status, reason_text: parsed.data.reason ?? null, delivery_pin: parsed.data.deliveryPin ?? null });

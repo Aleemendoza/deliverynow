@@ -4,8 +4,8 @@ import { createSupabaseServerClient, getSupabaseServerClient } from "@/lib/supab
 
 type Attempt = { id: string; expires_at: string; orders: { id: string; tracking_code: string; created_at: string; scheduled_at: string | null; estimated_price: number | null; final_price: number | null; distance_meters: number | null; duration_seconds: number | null; service_types: { name: string } | null } | null };
 
-export async function GET() {
-  const supabase = await createSupabaseServerClient();
+export async function GET(request: Request) {
+  const supabase = await createSupabaseServerClient(request);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return apiError("UNAUTHORIZED", "Iniciá sesión para ver ofertas.", 401);
   const database = getSupabaseServerClient();
