@@ -2,6 +2,8 @@
 
 > La migración `202607280004_fix_notification_event_identifier.sql` corrige una ambigüedad entre la variable local y la columna `notification_outbox.event_id` en la emisión de notificaciones. Sin ella, el evento `order.assigned` revierte de forma atómica el reclamo de un pedido.
 
+> El panel carga los pedidos asignados mediante una consulta de servidor limitada al registro `couriers` perteneciente al perfil autenticado. La autorización de sesión se verifica antes de la consulta; esto evita que una política RLS desactualizada o incompleta oculte el trabajo ya asignado.
+
 ## Componentes y rutas
 
 - Panel: `src/app/courier/page.tsx`; requiere rol `courier`.

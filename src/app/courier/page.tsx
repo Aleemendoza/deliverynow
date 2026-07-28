@@ -8,6 +8,7 @@ import { PushRegistration } from "@/components/notifications/push-registration";
 import { SiteHeader } from "@/components/site-header";
 import { requireRole } from "@/lib/auth/session";
 import { getCourierOperationalProfile, isCourierAvailable } from "@/lib/couriers/operational-profile";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,13 +16,17 @@ const activeStatuses = ["assigned", "heading_to_pickup", "at_pickup", "picked_up
 const operationalStatuses = [...activeStatuses, "delivered", "cancelled"] as const;
 
 export default async function Courier() {
-  const { supabase, profile } = await requireRole("courier");
+  const { profile } = await requireRole("courier");
+  const database = getSupabaseServerClient();
   const { data: courier } = await getCourierOperationalProfile(profile.id);
-  const availableQuery = supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "confirmed");
-  const activeQuery = courier ? supabase.from("orders").select("id", { count: "exact", head: true }).eq("assigned_courier_id", courier.id).in("status", activeStatuses) : Promise.resolve({ count: 0 });
-  const completedQuery = courier ? supabase.from("orders").select("id", { count: "exact", head: true }).eq("assigned_courier_id", courier.id).eq("status", "delivered") : Promise.resolve({ count: 0 });
+  // The session is authorized above and the service query is scoped to that
+  // session's operational courier record. This keeps assigned work visible
+  // even when an environment still has an outdated RLS read policy.
+  const availableQuery = database.from("orders").select("id", { count: "exact", head: true }).eq("status", "confirmed").is("assigned_courier_id", null);
+  const activeQuery = courier ? database.from("orders").select("id", { count: "exact", head: true }).eq("assigned_courier_id", courier.id).in("status", activeStatuses) : Promise.resolve({ count: 0 });
+  const completedQuery = courier ? database.from("orders").select("id", { count: "exact", head: true }).eq("assigned_courier_id", courier.id).eq("status", "delivered") : Promise.resolve({ count: 0 });
   const assignedOrdersQuery = courier
-    ? supabase.from("orders").select("id,tracking_code,status,created_at,scheduled_at,completed_at,estimated_price,final_price,distance_meters,duration_seconds,payment_responsible,payment_method,notes,service_types(name),order_stops(type,contact_name,contact_phone_e164,instructions,arrived_at,completed_at,addresses(formatted_address,latitude,longitude,floor,apartment,reference)),order_status_history(new_status,created_at,reason)").eq("assigned_courier_id", courier.id).in("status", operationalStatuses).order("created_at", { ascending: false }).returns<CourierOrder[]>()
+    ? database.from("orders").select("id,tracking_code,status,created_at,scheduled_at,completed_at,estimated_price,final_price,distance_meters,duration_seconds,payment_responsible,payment_method,notes,service_types(name),order_stops(type,contact_name,contact_phone_e164,instructions,arrived_at,completed_at,addresses(formatted_address,latitude,longitude,floor,apartment,reference)),order_status_history(new_status,created_at,reason)").eq("assigned_courier_id", courier.id).in("status", operationalStatuses).order("created_at", { ascending: false }).returns<CourierOrder[]>()
     : Promise.resolve({ data: [] as CourierOrder[] });
   const [{ count: available }, { count: active }, { count: completed }, { data: assignedOrders }] = await Promise.all([availableQuery, activeQuery, completedQuery, assignedOrdersQuery]);
   const orders = assignedOrders ?? [];
