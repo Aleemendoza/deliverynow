@@ -18,6 +18,8 @@
 - `document` es el servicio inicial del formulario. Cuando el cliente elige otro servicio, `order-wizard` reinicia el bloque `product` y sus errores antes de validar el nuevo tipo.
 - Los requisitos específicos (`size` y `weightKg` para paquete, descripción y fondos de compra cuando correspondan) sólo aplican al servicio actualmente seleccionado; valores inválidos de un tipo anterior no deben bloquear otro.
 
+- Los campos, selectores y acciones del flujo deben conservar borde, foco y etiquetas de alto contraste, de modo que su uso no dependa exclusivamente de distinguir colores.
+
 ## Creación idempotente y vinculación de cliente
 
 - `createOrder` invoca la RPC idempotente `create_guest_order`. Si la repetición no devuelve el ID, resuelve el pedido por `idempotency_key` antes de continuar.

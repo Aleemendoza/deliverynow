@@ -1,15 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0b1120;
-  --foreground: #f1f5f9;
-  --surface: #131c31;
-  --surface-raised: #1b2944;
+  --background: #0b1220;
+  --foreground: #f8fafc;
+  --surface: #111827;
+  --surface-raised: #172033;
+  --control: #0f172a;
+  --control-border: #64748b;
+  --control-border-hover: #94a3b8;
   --accent: #38bdf8;
   --accent-strong: #0ea5e9;
   --accent-soft: #e0f2fe;
   --accent-foreground: #06233a;
   --info: #7dd3fc;
+  --muted: #cbd5e1;
+  --focus-ring: rgba(56, 189, 248, 0.42);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -22,6 +28,7 @@
   --color-brand-soft: var(--accent-soft);
   --color-brand-foreground: var(--accent-foreground);
   --color-info: var(--info);
+  --color-muted: var(--muted);
   /* Compatibility aliases keep legacy utility classes on the new brand palette. */
   --color-yellow-400: var(--accent);
   --color-yellow-100: var(--accent-soft);
@@ -69,6 +76,79 @@ select,
 textarea,
 button {
   max-width: 100%;
+}
+
+input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  border: 1px solid var(--control-border) !important;
+  background-color: var(--control) !important;
+  color: var(--foreground) !important;
+  caret-color: var(--accent);
+}
+
+input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])::placeholder,
+textarea::placeholder {
+  color: var(--muted) !important;
+  opacity: 0.82;
+}
+
+input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):hover,
+select:hover,
+textarea:hover {
+  border-color: var(--control-border-hover) !important;
+}
+
+input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--focus-ring) !important;
+  outline: none;
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: #fb7185 !important;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+label:has(> input.sr-only[type="radio"]:checked) {
+  border-color: var(--accent) !important;
+  border-width: 2px !important;
+  background-color: rgba(56, 189, 248, 0.12) !important;
+}
+
+label:has(> input.sr-only[type="radio"]:checked)::after {
+  content: "Seleccionado";
+  align-self: flex-start;
+  margin-left: auto;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+button:not(:disabled),
+a[href] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 3px;
+}
+
+select option {
+  background: var(--control);
+  color: var(--foreground);
 }
 
 gmp-place-autocomplete,

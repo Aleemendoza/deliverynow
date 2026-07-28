@@ -6,6 +6,7 @@ Una entrada debe separar hechos verificados de pendientes, incluir los archivos 
 
 ## Entradas
 
+- [2026-07-28 — Base visual accesible para formularios](2026-07-28-accessible-form-contrast.md)
 - [2026-07-28 — Validación aislada por tipo de envío](2026-07-28-order-service-reset.md)
 - [2026-07-28 — Pedidos resilientes ante fallas de push](2026-07-28-orders-optional-push.md)
 - [2026-07-28 — Redirección de sesión activa desde login](2026-07-28-auth-login-session-redirect.md)

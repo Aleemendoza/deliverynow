@@ -21,5 +21,5 @@ export function ScrollToTop() {
 
   if (!visible) return null;
 
-  return <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Volver al inicio" className="fixed bottom-5 right-4 z-30 grid size-12 place-items-center rounded-full bg-brand text-brand-foreground shadow-lg shadow-black/30 transition hover:bg-brand-strong focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-background sm:bottom-6 sm:right-6"><ArrowUp className="size-5" aria-hidden="true"/></button>;
+  return <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Volver al inicio" className="fixed bottom-20 right-4 z-30 grid size-12 place-items-center rounded-full border border-brand/70 bg-brand text-brand-foreground shadow-lg shadow-black/30 transition hover:bg-brand-strong focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-background sm:bottom-6 sm:right-6"><ArrowUp className="size-5" aria-hidden="true"/></button>;
 }

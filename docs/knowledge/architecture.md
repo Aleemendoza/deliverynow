@@ -17,6 +17,11 @@
 - Las mutaciones de base de datos deben considerar RPC, transacción, RLS y auditoría; una modificación de UI no autoriza a saltar estos límites.
 - `src/proxy.ts` y `src/lib/auth/session.ts` participan en el flujo de sesión y roles. Revisarlos al agregar rutas privadas.
 
+## Accesibilidad visual
+
+- `src/app/globals.css` define tokens de superficie, controles y foco para toda la aplicación. Los campos no dependen del color de relleno para indicar que son interactivos: conservan borde visible, foco de teclado reforzado y texto/placeholder de alto contraste.
+- Los estados de error se expresan con texto mediante `role="alert"` además de un borde diferenciado; las acciones conservan etiquetas explícitas e iconos complementarios.
+
 ## Verificación mínima por cambio
 
 | Cambio | Revisar además |
