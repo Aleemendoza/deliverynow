@@ -5,6 +5,7 @@
 - Supabase Auth gestiona sesión. `src/lib/auth/session.ts` ofrece la protección de rol usada por paneles privados.
 - Los roles se derivan de `profiles` en base de datos; nunca se deben confiar roles entregados por el cliente.
 - Las páginas de cuenta y autenticación viven en `src/app/account` y `src/app/auth`.
+- `/auth/login` comprueba la sesión en servidor antes de renderizar el formulario. Con una sesión vigente redirige a `/account`, `/courier` o `/admin` según el rol resuelto desde `profiles`.
 
 - Los formularios de inicio de sesión y registro comparten los componentes de `src/components/auth/auth-ui.tsx`: preservan los valores mientras se corrige un error, muestran mensajes traducidos y contextuales, y liberan el estado de carga al finalizar cada solicitud. Sólo estos formularios optan por permitir el autocompletado de correo y gestores de contraseñas mediante `data-allow-autocomplete`.
 
